@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>PRAVAH — Live Feed Monitor</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      :root {
+        --bg: #0b1220;
+        --card: #0f1720;
+        --muted: #94a3b8;
+        --accent: #06d6a0;
+        --accent-2: #3b82f6;
+        --danger: #ef4444;
+      }
+
+      html, body {
+        height: 100%;
+        background: radial-gradient(
+            1200px 400px at 50% 0%,
+            rgba(59, 130, 246, 0.05),
+            transparent
+          ),
+          var(--bg);
+        font-family: Inter, ui-sans-serif, system-ui;
+        color: #cbd5e1;
+        margin: 0;
+        overflow: hidden;
+      }
+
+      .topbar {
+        backdrop-filter: blur(6px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        height: 60px;
+      }
+
+      .card {
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.02),
+          rgba(255, 255, 255, 0.01)
+        );
+        border: 1px solid rgba(255, 255, 255, 0.03);
+        border-radius: 0.75rem;
+      }
+
+      .action-btn {
+        background: linear-gradient(
+          90deg,
+          rgba(255, 255, 255, 0.02),
+          rgba(255, 255, 255, 0.01)
+        );
+        border: 1px solid rgba(255, 255, 255, 0.04);
+        padding: 0.4rem 0.8rem;
+        border-radius: 0.4rem;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 0.8rem;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        transition: all 0.2s;
+        text-decoration: none;
+        color: #cbd5e1;
+      }
+
+      .action-btn:hover {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.1);
+      }
+
+      .video-container {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        border-radius: 0.75rem;
+        overflow: hidden;
+        border: 1px solid rgba(59, 130, 246, 0.2);
+        box-shadow: 0 0 30px rgba(59, 130, 246, 0.05);
+      }
+      
+      video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      /* Detail Row Styling */
+      .detail-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      }
+      .detail-row:last-child {
+        border-bottom: none;
+      }
+      .detail-label {
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+      .detail-value {
+        font-weight: 600;
+        color: white;
+        font-family: monospace;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="topbar px-4 py-2 flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <a href="authority_dashboard.html" class="action-btn text-blue-300">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          Back to Dashboard
+        </a>
+        <div class="h-6 w-px bg-white/10 mx-1"></div>
+        <h2 class="font-semibold text-lg text-white">Live Feed Monitor</h2>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <div class="bg-red-500/20 border border-red-500/50 text-red-200 text-xs px-2 py-1 rounded-full flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+            REC
+        </div>
+      </div>
+    </div>
+
+    <div class="p-5 h-[calc(100vh-60px)] grid grid-cols-1 lg:grid-cols-4 gap-5">
+      
+      <div class="lg:col-span-3 flex flex-col h-full">
+        <div class="video-container flex-grow relative bg-black">
+            <video autoplay loop muted playsinline>
+                <source src="Raw_car_3.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            
+            <div class="absolute bottom-4 right-4 bg-black/60 backdrop-blur px-2 py-1 rounded text-xs font-mono text-white/80" id="video-timestamp">
+                --:--:--
+            </div>
+        </div>
+      </div>
+
+      <div class="lg:col-span-1 flex flex-col h-full">
+        <div class="card p-5 h-full">
+            <div class="flex items-center gap-2 mb-6">
+                <div class="p-2 bg-blue-500/10 rounded-lg">
+                    <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                </div>
+                <h3 class="font-semibold text-white">Feed Metadata</h3>
+            </div>
+
+            <div class="space-y-1">
+                <div class="detail-row">
+                    <span class="detail-label">Camera ID</span>
+                    <span class="detail-value text-blue-300"><CAM-06></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Location</span>
+                    <span class="detail-value">Highway Exit</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Lane View</span>
+                    <span class="detail-value">North-West </span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Resolution</span>
+                    <span class="detail-value">1080p / 60fps</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Encoding</span>
+                    <span class="detail-value">H.265 / HEVC</span>
+                </div>
+                
+                <div class="my-6 border-t border-white/10"></div>
+
+                <div class="bg-white/5 rounded-lg p-4 border border-white/5 text-center">
+                    <div class="text-xs text-gray-400 uppercase tracking-wide mb-1">Current Date</div>
+                    <div class="text-lg font-bold text-white mb-3" id="live-date">--</div>
+                    
+                    <div class="text-xs text-gray-400 uppercase tracking-wide mb-1">Current Time</div>
+                    <div class="text-2xl font-bold text-accent font-mono" id="live-time">--:--:--</div>
+                </div>
+
+                <div class="mt-6">
+                     <div class="text-xs text-center text-gray-500">
+                        Session ID: <span class="font-mono text-gray-400">rec_7880a_live</span>
+                     </div>
+                </div>
+            </div>
+        </div>
+      </div>
+
+    </div>
+
+    <script>
+        function updateTime() {
+            const now = new Date();
+            
+            // Format Date (e.g., "Mon, 05 Dec 2025")
+            const dateOptions = { weekday: 'short', year: 'numeric', month: 'short', day: '2-digit' };
+            document.getElementById('live-date').innerText = now.toLocaleDateString('en-US', dateOptions);
+
+            // Format Time (e.g., "14:30:45")
+            document.getElementById('live-time').innerText = now.toLocaleTimeString('en-GB'); // 24-hour format
+            document.getElementById('video-timestamp').innerText = now.toLocaleTimeString('en-GB');
+        }
+
+        setInterval(updateTime, 1000);
+        updateTime(); // Run immediately on load
+    </script>
+  </body>
+</html>

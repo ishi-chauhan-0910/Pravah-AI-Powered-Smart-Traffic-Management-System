@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pravah Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    /* ---- THEMES ---- */
+    .dark-theme {
+      --bg-from: #141b2d; --bg-to: #1a2338; --header-bg: #1a2338/90; --header-border: #374151;
+      --trip-bg: #1a2338/70; --card-bg: #1a2338; --card-sub-bg: #2d3748/98; --card-border: #4b5563;
+      --text-primary: #e5e7eb; --text-muted: #d1d5db; --accent-green: #06d6a0; --accent-blue: #3b82f6;
+      --highlight-green-600: #16a34a; --highlight-yellow-400: #facc15; --highlight-red-500: #ef4444;
+      --highlight-red-sub-bg: #ef4444/10; --highlight-red-border: #ef4444/30; --highlight-red-text: #f87171;
+    }
+    .light-theme {
+      --bg-from: #dbeafe; --bg-to: #a7f3d0; --header-bg: #ffffff/80; --header-border: #e5e7eb;
+      --trip-bg: #ffffff/60; --card-bg: #ffffff; --card-sub-bg: #f1f5f9; --card-border: #e2e8f0;
+      --text-primary: #111827; --text-muted: #64748b; --accent-green: #10b981; --accent-blue: #3b82f6;
+      --highlight-green-600: #16a34a; --highlight-yellow-400: #facc15; --highlight-red-500: #ef4444;
+      --highlight-red-sub-bg: #fee2e2; --highlight-red-border: #fecaca; --highlight-red-text: #dc2626;
+    }
+    body { background: linear-gradient(to bottom right, var(--bg-from), var(--bg-to)); color: var(--text-primary); transition: background 0.3s, color 0.3s; }
+    header { background: var(--header-bg); border-bottom-color: var(--header-border); }
+    section { background: var(--trip-bg); border-bottom-color: var(--header-border); }
+    .card { background: var(--card-bg); border-color: var(--card-border); }
+    .card-sub { background: var(--card-sub-bg); border-color: var(--card-border); padding: 1.25rem; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); }
+    .card-red-sub { background: var(--highlight-red-sub-bg); border: 1px solid var(--highlight-red-border); color: var(--highlight-red-text); }
+    
+    .notification-box {
+        background-color: #ffffff;
+        color: #111827;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    }
+    .notification-box::before {
+      content: ''; position: absolute; top: -8px; right: 28px; width: 0; height: 0;
+      border-left: 8px solid transparent; border-right: 8px solid transparent; border-bottom: 8px solid #ffffff;
+      filter: drop-shadow(0 -1px 1px rgb(0 0 0 / 0.05));
+    }
+    .notification-box p { color: #64748b; }
+    .notification-box h3 { color: #111827; }
+
+    .text-muted { color: var(--text-muted); }
+    .text-accent-blue { color: var(--accent-blue); }
+    .text-highlight-green-600 { color: var(--highlight-green-600); }
+    .text-highlight-yellow-400 { color: var(--highlight-yellow-400); }
+    .text-highlight-red-500 { color: var(--highlight-red-500); }
+    #map { height: 16rem; }
+    @media (min-width: 640px) { #map { height: 20rem; } }
+    input { color: var(--text-primary); }
+    button { color: var(--text-primary); }
+    .theme-switch { position: relative; width: 60px; height: 34px; border-radius: 50px; border: 2px solid var(--card-border); overflow: hidden; cursor: pointer; background: linear-gradient(to top, #87ceeb, #b3e5fc); transition: background 0.6s ease-in-out; display: flex; align-items: center; justify-content: center; }
+    .theme-switch .sky { position: relative; width: 100%; height: 100%; }
+    .sun { position: absolute; top: 4px; left: 6px; width: 22px; height: 22px; background: radial-gradient(circle at 30% 30%, #fff59d, #FFD93B); border-radius: 50%; box-shadow: 0 0 8px #FFD93B, 0 0 15px #FFD93B; transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
+    .moon { position: absolute; top: 4px; right: -30px; width: 22px; height: 22px; background: radial-gradient(circle at 30% 30%, #e0e0e0, #bdbdbd); border-radius: 50%; box-shadow: inset -4px -4px 8px rgba(0, 0, 0, 0.3); transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
+    .moon::before, .moon::after { content: ""; position: absolute; background: rgba(0, 0, 0, 0.15); border-radius: 50%; }
+    .moon::before { width: 5px; height: 5px; top: 4px; left: 5px; }
+    .moon::after { width: 3px; height: 3px; bottom: 5px; right: 4px; }
+    .theme-switch.dark-theme { background: linear-gradient(to top, #0b1220, #1a237e); }
+    .theme-switch.dark-theme .sun { left: -30px; opacity: 0; }
+    .theme-switch.dark-theme .moon { right: 6px; opacity: 1; }
+  </style>
+</head>
+<body class="min-h-screen">
+
+  <header class="backdrop-blur shadow border-b sticky top-0 z-20">
+    <div class="container mx-auto px-4 sm:px-6 py-3 flex flex-wrap justify-between items-center gap-y-3">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 bg-gradient-to-r from-[var(--accent-blue)] to-[var(--accent-green)] rounded-full flex items-center justify-center flex-shrink-0">
+          <i class="fa-solid fa-car text-white"></i>
+        </div>
+        <div>
+          <h1 class="text-lg sm:text-xl font-bold">Pravah Dashboard</h1>
+          <p id="greeting" class="text-xs sm:text-sm text-muted"></p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-4 sm:space-x-6 text-muted text-sm">
+        <a href="complaints.html" class="flex items-center space-x-2 hover:text-[var(--text-primary)] transition-colors">
+          <i class="fa-solid fa-circle-exclamation"></i><span class="hidden sm:inline ml-1">Complaints</span>
+        </a>
+        
+        <div id="notification-bell" class="relative cursor-pointer flex items-center">
+            <i class="fa-solid fa-bell text-xl transition-transform hover:scale-110" style="color: #FFC107;"></i>
+            <span id="notification-badge" class="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold border-2 border-[var(--header-bg)]">1</span>
+        </div>
+        
+        <div class="hidden md:flex items-center space-x-2"><i class="fa-solid fa-cloud"></i><span>24°C • Clear</span></div>
+        <div class="hidden md:flex items-center space-x-2"><i class="fa-solid fa-wind"></i><span>AQI: 42 Good</span></div>
+        <div id="theme-toggle" class="theme-switch">
+          <div class="sky"><div class="sun"></div><div class="moon"></div></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section class="backdrop-blur border-b z-10 relative">
+    <div class="container mx-auto px-4 sm:px-6 py-4 flex flex-col lg:flex-row items-center gap-4">
+      <div class="flex items-center space-x-2 w-full lg:flex-1">
+        <i class="fa-solid fa-map-pin text-accent-blue"></i>
+        <input type="text" id="start-location" placeholder="Enter start location"
+               class="bg-[var(--card-sub-bg)] border border-[var(--card-border)] rounded p-2 w-full text-sm" />
+      </div>
+      <div class="flex items-center space-x-2 w-full lg:flex-1">
+        <i class="fa-solid fa-flag text-accent-blue"></i>
+        <input type="text" id="end-location" placeholder="Enter destination"
+               class="bg-[var(--card-sub-bg)] border border-[var(--card-border)] rounded p-2 w-full text-sm" />
+      </div>
+      <div class="flex items-center gap-4 w-full lg:w-auto">
+        <div class="flex items-center space-x-2 flex-1 lg:flex-none">
+          <i class="fa-solid fa-clock text-muted"></i>
+          <input type="time" id="departure-time" value="12:00"
+                 class="bg-[var(--card-sub-bg)] border border-[var(--card-border)] rounded p-2 w-full lg:w-32 text-sm" />
+        </div>
+        <button onclick="calculateRoute()"
+                class="bg-gradient-to-r from-[var(--accent-blue)] to-[var(--accent-green)] text-[#ffffff] px-6 py-2 rounded shadow flex items-center justify-center flex-1 lg:flex-none">
+          Plan Route
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <main class="p-4 md:p-6 xl:p-8 grid grid-cols-1 xl:grid-cols-3 gap-6 md:gap-8">
+    <div class="xl:col-span-2 space-y-6">
+      <div class="card rounded-lg shadow p-4 md:p-6">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
+          <h2 class="flex items-center space-x-2 font-bold text-lg">
+            <i class="fa-solid fa-diamond-turn-right text-accent-blue"></i><span>Live Route Assistant</span>
+          </h2>
+          <button onclick="startNavigation()"
+                  class="bg-gradient-to-r from-[var(--accent-blue)] to-[var(--accent-green)] text-[#ffffff] px-4 py-2 rounded shadow flex items-center self-end sm:self-center">
+            <i class="fa-solid fa-location-arrow mr-2"></i> Start Navigation
+          </button>
+        </div>
+        <div id="map" class="rounded-lg mb-4 card-sub border border-[var(--card-border)]"></div>
+        <div id="directions-panel" class="text-sm text-muted space-y-2 card-sub p-4 rounded-lg border border-[var(--card-border)] max-h-48 overflow-y-auto">
+            <p>Your trip details will appear here.</p>
+        </div>
+      </div>
+    </div>
+    <div class="space-y-6">
+      <div class="card rounded-lg shadow p-4 md:p-6">
+        <h2 class="flex items-center space-x-2 font-bold text-lg mb-4">
+          <i class="fa-solid fa-clock-rotate-left text-accent-blue"></i><span>Predictive Insights</span>
+        </h2>
+        <div class="p-4 card-sub rounded-lg border border-[var(--card-border)] space-y-3">
+          <div class="flex justify-between items-center">
+            <div>
+              <p class="text-sm font-medium">Best time to leave</p>
+              <p id="best-time" class="text-2xl font-semibold text-accent-blue">- - : - -</p>
+            </div>
+            <div id="best-time-savings" class="bg-gradient-to-r from-[var(--accent-blue)] to-[var(--accent-green)] text-[#ffffff] text-xs font-bold px-3 py-1 rounded-full shadow">
+              Plan a route
+            </div>
+          </div>
+          <div class="border-t border-[var(--card-border)] pt-3">
+            <p class="text-sm font-medium mb-2">Next 60 minutes forecast</p>
+            <div id="traffic-forecast" class="space-y-1">
+                <p class="text-xs text-muted text-center py-2">Plan a route for forecast</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card rounded-lg shadow p-4">
+         <div class="p-3 card-red-sub rounded-lg flex justify-between items-center">
+           <div id="selected-time-label" class="font-semibold text-sm">If you leave at --:-- :</div>
+           <div id="selected-time-journey-value" class="font-bold text-sm">
+             Plan a route
+           </div>
+         </div>
+      </div>
+
+      <div class="card rounded-lg shadow p-4 md:p-6">
+        <h2 class="flex items-center space-x-2 font-bold text-lg mb-4">
+          <i class="fa-solid fa-trophy text-highlight-green-600"></i><span>Personal Impact</span>
+        </h2>
+        <div class="grid grid-cols-3 gap-2 md:gap-4">
+          <div class="text-center p-3 card-sub rounded-lg border border-[var(--card-border)]">
+            <i class="fa-solid fa-stopwatch text-accent-blue mx-auto mb-1"></i>
+            <p id="time-saved" class="text-lg font-semibold text-accent-blue">0m</p>
+            <p class="text-xs text-muted">Time saved</p>
+          </div>
+          <div class="text-center p-3 card-sub rounded-lg border border-[var(--card-border)]">
+            <i class="fa-solid fa-gas-pump text-muted mx-auto mb-1"></i>
+            <p id="fuel-saved" class="text-lg font-semibold text-muted">₹0</p>
+            <p class="text-xs text-muted">Fuel saved</p>
+          </div>
+          <div class="text-center p-3 card-sub rounded-lg border border-[var(--card-border)]">
+            <i class="fa-solid fa-leaf text-highlight-green-600 mx-auto mb-1"></i>
+            <p id="co2-reduced" class="text-lg font-semibold text-highlight-green-600">0kg</p>
+            <p class="text-xs text-muted">CO₂ reduced</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="notification-overlay" class="fixed inset-0 bg-black bg-opacity-20 backdrop-blur-sm hidden z-30">
+      <div class="notification-box absolute top-20 right-4 sm:right-6 w-80 rounded-lg p-4">
+          <button id="close-notification" class="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition-colors">
+              <i class="fa-solid fa-circle-xmark w-5 h-5"></i>
+          </button>
+          <h3 class="font-bold text-base mb-1 flex items-center space-x-2">
+             <i class="fa-solid fa-briefcase" style="color: #3b82f6;"></i> <span>Office: Daily</span>
+          </h3>
+          <p class="text-sm">
+              For today, leave 10 mins early at 8:50 AM as traffic of 20 mins delay is expected at 9:00 AM.
+          </p>
+      </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    // --- Notification Elements & Logic ---
+    const notificationBell = document.getElementById('notification-bell');
+    const notificationBadge = document.getElementById('notification-badge');
+    const notificationOverlay = document.getElementById('notification-overlay');
+    const closeNotificationBtn = document.getElementById('close-notification');
+
+    notificationBell.addEventListener('click', (event) => {
+        event.stopPropagation();
+        const isHidden = notificationOverlay.classList.contains('hidden');
+        if (isHidden) {
+            notificationOverlay.classList.remove('hidden');
+            notificationBadge.classList.add('hidden');
+        } else {
+            notificationOverlay.classList.add('hidden');
+        }
+    });
+
+    function closeOverlay() {
+        notificationOverlay.classList.add('hidden');
+    }
+
+    closeNotificationBtn.addEventListener('click', closeOverlay);
+    
+    notificationOverlay.addEventListener('click', (e) => {
+        if (e.target === notificationOverlay) {
+            closeOverlay();
+        }
+    });
+
+    // --- Original Dashboard Functionality ---
+    const themeToggle = document.getElementById('theme-toggle');
+    const body = document.body;
+    if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        body.classList.add('dark-theme');
+        themeToggle.classList.add('dark-theme');
+    } else {
+        body.classList.add('light-theme');
+    }
+    themeToggle.addEventListener('click', () => {
+        body.classList.toggle('dark-theme');
+        body.classList.toggle('light-theme');
+        themeToggle.classList.toggle('dark-theme');
+        localStorage.setItem('theme', body.classList.contains('dark-theme') ? 'dark' : 'light');
+    });
+    const hour = new Date().getHours();
+    document.getElementById("greeting").textContent = (hour < 12 ? "Good Morning" : hour < 17 ? "Good Afternoon" : "Good Evening") + ", Jashan";
+
+    const map = L.map('map').setView([28.4595, 77.0266], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
+
+    let routeLayer, navigationTimer = null, trafficUpdateTimer = null, baseDurationMin = 0, routeDistanceKm = 0;
+
+    function formatDuration(totalMinutes) {
+        if (isNaN(totalMinutes) || totalMinutes < 1) return '0m';
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = Math.round(totalMinutes % 60);
+        let formattedString = '';
+        if (hours > 0) { formattedString += `${hours}h `; }
+        if (minutes > 0 || hours === 0) { formattedString += `${minutes}m`; }
+        return formattedString.trim();
+    }
+
+    function getTrafficFactor(time) {
+        const hours = time.getHours();
+        if ((hours >= 8 && hours < 11) || (hours >= 17 && hours < 20)) { return 1.4 + Math.random() * 0.05; } 
+        else if ((hours >= 11 && hours < 13) || (hours >= 15 && hours < 17)) { return 1.2 + Math.random() * 0.05; } 
+        else { return 1.0 + Math.random() * 0.05; }
+    }
+
+    async function geocode(query) {
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
+        const data = await response.json();
+        return data.length > 0 ? [parseFloat(data[0].lat), parseFloat(data[0].lon)] : null;
+    }
+
+    function calculateBestTimeToLeave(baseDuration) {
+        const departureInput = document.getElementById('departure-time').value;
+        let selectedTime = new Date();
+        if (departureInput) {
+            const [hours, minutes] = departureInput.split(':').map(Number);
+            selectedTime.setHours(hours, minutes, 0, 0);
+        }
+        let bestTime = selectedTime;
+        let minDuration = baseDuration * getTrafficFactor(selectedTime);
+        for (let offset = 0; offset <= 120; offset += 15) {
+            const futureTime = new Date(selectedTime.getTime() + offset * 60000);
+            const tempTrafficFactor = getTrafficFactor(futureTime);
+            const adjustedDuration = baseDuration * tempTrafficFactor;
+            if (adjustedDuration < minDuration) {
+                minDuration = adjustedDuration;
+                bestTime = futureTime;
+            }
+        }
+        const selectedTimeDuration = baseDuration * getTrafficFactor(selectedTime);
+        const savings = selectedTimeDuration - minDuration;
+        return { bestTime, savings, selectedTimeDuration };
+    }
+
+    function updatePredictiveInsights(baseDuration) {
+        const { bestTime, savings, selectedTimeDuration } = calculateBestTimeToLeave(baseDuration);
+        const departureInput = document.getElementById('departure-time').value;
+        document.getElementById('best-time').textContent = bestTime.toTimeString().substring(0, 5);
+        document.getElementById('best-time-savings').textContent = savings > 1 ? `Saves ~${formatDuration(savings)}` : 'Optimal time';
+        document.getElementById('selected-time-label').textContent = `If you leave at ${departureInput}:`;
+        document.getElementById('selected-time-journey-value').textContent = `~${formatDuration(selectedTimeDuration)} travel time`;
+        const nowTraffic = getTrafficFactor(new Date());
+        const futureTraffic = getTrafficFactor(new Date(new Date().getTime() + 30 * 60000));
+        let forecastHtml = '';
+        const getTrafficStatus = (factor) => {
+            if (factor < 1.15) return '<span class="text-highlight-green-600 font-semibold">Good</span>';
+            if (factor < 1.35) return '<span class="text-highlight-yellow-400 font-semibold">Moderate</span>';
+            return '<span class="text-highlight-red-500 font-semibold">Heavy</span>';
+        };
+        forecastHtml += `<div class="flex justify-between text-xs"><span>Now - 30 min</span>${getTrafficStatus(nowTraffic)}</div>`;
+        forecastHtml += `<div class="flex justify-between text-xs"><span>30 - 60 min</span>${getTrafficStatus(futureTraffic)}</div>`;
+        document.getElementById('traffic-forecast').innerHTML = forecastHtml;
+        updatePersonalImpact(savings);
+    }
+
+    function updatePersonalImpact(timeSavedMinutes) {
+        document.getElementById('time-saved').textContent = formatDuration(timeSavedMinutes);
+        const fuelConsumptionRate = 0.02; 
+        const fuelSavedLiters = (timeSavedMinutes * fuelConsumptionRate);
+        const fuelSavedCost = Math.round(fuelSavedLiters * 95);
+        const co2ReducedKg = (fuelSavedLiters * 2.3).toFixed(1);
+        document.getElementById('fuel-saved').textContent = `₹${fuelSavedCost}`;
+        document.getElementById('fuel-saved').classList.toggle('text-muted', fuelSavedCost <= 0);
+        document.getElementById('co2-reduced').textContent = `${co2ReducedKg}kg`;
+    }
+
+    function startTrafficUpdates() {
+        if (trafficUpdateTimer) clearInterval(trafficUpdateTimer);
+        trafficUpdateTimer = setInterval(() => {
+            if (baseDurationMin > 0 && navigationTimer) {
+                const tripInfoHeader = document.getElementById('trip-info-header');
+                if (tripInfoHeader) {
+                    let remainingMinutes = parseFloat(tripInfoHeader.dataset.remaining);
+                    if (!isNaN(remainingMinutes)) {
+                        const newTrafficFactor = getTrafficFactor(new Date());
+                        const adjustedRemaining = remainingMinutes * newTrafficFactor;
+                        tripInfoHeader.textContent = `Trip Info: ${routeDistanceKm} km, ~${formatDuration(adjustedRemaining)} remaining`;
+                    }
+                }
+            }
+        }, 30000);
+    }
+
+    async function calculateRoute() {
+        if (navigationTimer) clearInterval(navigationTimer);
+        if (trafficUpdateTimer) clearInterval(trafficUpdateTimer);
+        const startInput = document.getElementById("start-location").value;
+        const endInput = document.getElementById("end-location").value;
+        if (!startInput || !endInput) { alert("Please enter both start and destination"); return; }
+        const startCoords = await geocode(startInput);
+        const endCoords = await geocode(endInput);
+        if (!startCoords || !endCoords) { alert("Could not find one or both locations. Please be more specific."); return; }
+        if (routeLayer) map.removeLayer(routeLayer);
+        map.eachLayer(layer => { if (layer instanceof L.Marker) map.removeLayer(layer); });
+        const apiKey = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjBhZWE2MWE5OTFiNjRjZDRhMGQwNzRmODc1NjljMTdmIiwiaCI6Im11cm11cjY0In0=";
+        const url = `https://api.openrouteservice.org/v2/directions/driving-car?start=${startCoords[1]},${startCoords[0]}&end=${endCoords[1]},${endCoords[0]}`;
+        try {
+            const response = await fetch(url, { headers: { 'Authorization': apiKey } });
+            if (!response.ok) throw new Error(`API request failed: ${response.statusText}`);
+            const data = await response.json();
+            if (!data.features || data.features.length === 0) { alert("Could not find a route."); return; }
+            const routeData = data.features[0].properties.segments[0];
+            routeDistanceKm = (routeData.distance / 1000).toFixed(2);
+            baseDurationMin = Math.round(routeData.duration / 60);
+            const { selectedTimeDuration } = calculateBestTimeToLeave(baseDurationMin);
+            const coords = data.features[0].geometry.coordinates.map(c => [c[1], c[0]]);
+            routeLayer = L.polyline(coords, { color: "var(--accent-blue)" }).addTo(map);
+            map.fitBounds(routeLayer.getBounds());
+            L.marker(startCoords).addTo(map).bindPopup("Start");
+            L.marker(endCoords).addTo(map).bindPopup("Destination");
+            let stepsHtml = `<h3 id="trip-info-header" data-remaining="${selectedTimeDuration}" class='font-semibold mb-2'>Trip Info: ${routeDistanceKm} km, ~${formatDuration(selectedTimeDuration)}</h3>`;
+            stepsHtml += "<ol class='list-decimal pl-4 space-y-1'>";
+            routeData.steps.forEach(s => { stepsHtml += `<li>${s.instruction} (${(s.distance / 1000).toFixed(2)} km)</li>`; });
+            stepsHtml += "</ol>";
+            document.getElementById("directions-panel").innerHTML = stepsHtml;
+            updatePredictiveInsights(baseDurationMin);
+            startNavigation();
+        } catch (error) { console.error("Error fetching route:", error); alert("An error occurred while planning the route."); }
+    }
+
+    function startNavigation() {
+        if (navigationTimer) clearInterval(navigationTimer);
+        if (trafficUpdateTimer) clearInterval(trafficUpdateTimer);
+        if (baseDurationMin > 0) {
+            const { selectedTimeDuration } = calculateBestTimeToLeave(baseDurationMin);
+            let remainingMinutes = selectedTimeDuration;
+            startTrafficUpdates();
+            navigationTimer = setInterval(() => {
+                if (remainingMinutes > 0) { remainingMinutes--; }
+                const tripInfoHeader = document.getElementById('trip-info-header');
+                if (tripInfoHeader) {
+                    tripInfoHeader.dataset.remaining = remainingMinutes;
+                    if (remainingMinutes > 0) {
+                        const currentTrafficFactor = getTrafficFactor(new Date());
+                        const adjustedRemaining = remainingMinutes * currentTrafficFactor;
+                        tripInfoHeader.textContent = `Trip Info: ${routeDistanceKm} km, ~${formatDuration(adjustedRemaining)} remaining`;
+                    } else {
+                        clearInterval(navigationTimer);
+                        clearInterval(trafficUpdateTimer);
+                        navigationTimer = null;
+                        tripInfoHeader.innerHTML = `Trip Info: ${routeDistanceKm} km - <span class="text-highlight-green-600 font-semibold">You have arrived!</span>`;
+                    }
+                }
+            }, 60000);
+        }
+    }
+  </script>
+</body>
+</html>

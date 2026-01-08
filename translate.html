@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PRAVAH — System Status</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Noto+Sans+Oriya:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root { --bg: #0b1220; --card: #0f172a; --muted: #94a3b8; --accent: #06d6a0; --accent-2: #3b82f6; }
+        
+        /* Font Handling */
+        html, body { 
+            background-color: var(--bg); font-family: 'Inter', sans-serif; color: #cbd5e1; 
+            transition: font-family 0.3s ease;
+        }
+        body.lang-hi { font-family: 'Noto Sans Devanagari', sans-serif; }
+        body.lang-or { font-family: 'Noto Sans Oriya', sans-serif; }
+
+        .topbar { backdrop-filter: blur(6px); border-bottom: 1px solid rgba(255, 255, 255, 0.03); }
+        .card { background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01)); border: 1px solid rgba(255, 255, 255, 0.04); border-radius: 0.75rem; padding: 1.5rem; }
+        .action-btn { background: rgba(255, 255, 255, 0.01); border: 1px solid rgba(255, 255, 255, 0.04); padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 600; transition: all 0.2s ease; }
+        .action-btn:hover { background: rgba(255, 255, 255, 0.05); border-color: var(--accent-2); }
+        .progress-bar { background-color: rgba(255,255,255,0.05); border-radius: 99px; overflow: hidden; }
+        .progress-bar-inner { height: 10px; border-radius: 99px; }
+
+        /* Language Toggle Style */
+        .lang-select {
+            background-color: rgba(255, 255, 255, 0.05);
+            color: #cbd5e1;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 0.4rem 2rem 0.4rem 0.8rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            outline: none;
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+        }
+        .lang-select:focus { border-color: var(--accent-2); }
+        .lang-select option { background-color: var(--bg); color: white; }
+    </style>
+</head>
+<body>
+    <div class="topbar px-6 py-3 flex items-center justify-between sticky top-0 z-50">
+        <div class="flex items-center gap-4">
+            <a href="authority_dashboard.html" class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-md bg-gradient-to-br from-sky-600 to-indigo-600 flex items-center justify-center shadow">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 12h3l3-8 4 16 3-12 1 6h3" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+                <div>
+                    <div class="text-white font-semibold" data-i18n="brand">PRAVAH Traffic Control</div>
+                    <div class="text-xs text-gray-400" data-i18n="sub_brand">System Health & Status</div>
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="relative">
+                <select id="lang-toggle" class="lang-select">
+                    <option value="en">English</option>
+                    <option value="hi">हिंदी</option>
+                    <option value="or">ଓଡ଼ିଆ</option>
+                </select>
+            </div>
+
+            <a href="menu.html" class="action-btn" data-i18n="btn_menu">Menu</a>
+            <a href="authority_dashboard.html" class="action-btn" data-i18n="btn_back">Back to Dashboard</a>
+        </div>
+    </div>
+
+    <main class="p-8">
+        <div class="card bg-green-500/10 border-green-500/30 mb-6 flex items-center gap-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <div>
+                <h2 class="text-xl font-semibold text-white" data-i18n="status_ok">All Systems Operational</h2>
+                <p class="text-green-300" data-i18n="status_msg">No issues detected. Last check: a few seconds ago.</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="card">
+                <h3 class="font-semibold text-white mb-4" data-i18n="card_sensors">Sensor Network</h3>
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-gray-300" data-i18n="lbl_online">Online Sensors</span>
+                    <span class="font-bold text-green-400">246 / 247</span>
+                </div>
+                <div class="progress-bar"><div class="progress-bar-inner bg-green-500" style="width: 99.5%;"></div></div>
+                <div class="mt-4 text-sm text-yellow-400" data-i18n="msg_sensor_off">1 sensor (S-108) offline</div>
+            </div>
+            
+            <div class="card">
+                <h3 class="font-semibold text-white mb-4" data-i18n="card_api">API & Network</h3>
+                <div class="space-y-3 text-sm">
+                    <div class="flex justify-between"><span data-i18n="lbl_api_stat">API Status:</span><span class="text-green-400 font-semibold" data-i18n="val_healthy">Healthy</span></div>
+                    <div class="flex justify-between"><span data-i18n="lbl_latency">Avg. Latency:</span><span class="text-green-400 font-semibold">48ms</span></div>
+                    <div class="flex justify-between"><span data-i18n="lbl_uptime">Uptime (24h):</span><span class="text-green-400 font-semibold">100%</span></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 class="font-semibold text-white mb-4" data-i18n="card_servers">Core Servers</h3>
+                <div class="mb-4">
+                    <div class="flex justify-between text-sm mb-1"><span data-i18n="lbl_cpu">CPU Load</span><span>35%</span></div>
+                    <div class="progress-bar"><div class="progress-bar-inner bg-blue-500" style="width: 35%;"></div></div>
+                </div>
+                <div>
+                    <div class="flex justify-between text-sm mb-1"><span data-i18n="lbl_mem">Memory Usage</span><span>60%</span></div>
+                    <div class="progress-bar"><div class="progress-bar-inner bg-yellow-500" style="width: 60%;"></div></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 class="font-semibold text-white mb-4" data-i18n="card_ai">AI Prediction Model</h3>
+                 <div class="space-y-3 text-sm">
+                    <div class="flex justify-between"><span data-i18n="lbl_svc_stat">Service Status:</span><span class="text-green-400 font-semibold" data-i18n="val_active">Active</span></div>
+                    <div class="flex justify-between"><span data-i18n="lbl_accuracy">Prediction Accuracy:</span><span class="font-semibold">94.2%</span></div>
+                    <div class="flex justify-between"><span data-i18n="lbl_trained">Last Trained:</span><span class="font-semibold">25 Sep 2025</span></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 class="font-semibold text-white mb-4" data-i18n="card_db">Database</h3>
+                <div class="space-y-3 text-sm">
+                    <div class="flex justify-between"><span data-i18n="lbl_conn">Connection:</span><span class="text-green-400 font-semibold" data-i18n="val_connected">Connected</span></div>
+                    <div class="flex justify-between"><span data-i18n="lbl_qps">Queries per Second:</span><span class="font-semibold">128</span></div>
+                    <div class="flex justify-between"><span data-i18n="lbl_storage">Storage Used:</span><span class="font-semibold">78%</span></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const translations = {
+            en: {
+                brand: "PRAVAH Traffic Control",
+                sub_brand: "System Health & Status",
+                btn_menu: "Menu",
+                btn_back: "Back to Dashboard",
+                status_ok: "All Systems Operational",
+                status_msg: "No issues detected. Last check: a few seconds ago.",
+                card_sensors: "Sensor Network",
+                lbl_online: "Online Sensors",
+                msg_sensor_off: "1 sensor (S-108) offline",
+                card_api: "API & Network",
+                lbl_api_stat: "API Status:",
+                val_healthy: "Healthy",
+                lbl_latency: "Avg. Latency:",
+                lbl_uptime: "Uptime (24h):",
+                card_servers: "Core Servers",
+                lbl_cpu: "CPU Load",
+                lbl_mem: "Memory Usage",
+                card_ai: "AI Prediction Model",
+                lbl_svc_stat: "Service Status:",
+                val_active: "Active",
+                lbl_accuracy: "Prediction Accuracy:",
+                lbl_trained: "Last Trained:",
+                card_db: "Database",
+                lbl_conn: "Connection:",
+                val_connected: "Connected",
+                lbl_qps: "Queries per Second:",
+                lbl_storage: "Storage Used:"
+            },
+            hi: {
+                brand: "प्रवाह यातायात नियंत्रण",
+                sub_brand: "सिस्टम स्वास्थ्य और स्थिति",
+                btn_menu: "मेनू",
+                btn_back: "डैशबोर्ड पर वापस जाएं",
+                status_ok: "सभी सिस्टम ठीक काम कर रहे हैं",
+                status_msg: "कोई समस्या नहीं मिली। अंतिम जांच: कुछ सेकंड पहले।",
+                card_sensors: "सेंसर नेटवर्क",
+                lbl_online: "सक्रिय सेंसर",
+                msg_sensor_off: "1 सेंसर (S-108) ऑफ़लाइन",
+                card_api: "API और नेटवर्क",
+                lbl_api_stat: "API स्थिति:",
+                val_healthy: "स्वस्थ",
+                lbl_latency: "औसत विलंबता:",
+                lbl_uptime: "अपटाइम (24 घंटे):",
+                card_servers: "कोर सर्वर",
+                lbl_cpu: "CPU लोड",
+                lbl_mem: "मेमोरी उपयोग",
+                card_ai: "AI भविष्यवाणी मॉडल",
+                lbl_svc_stat: "सेवा स्थिति:",
+                val_active: "सक्रिय",
+                lbl_accuracy: "भविष्यवाणी सटीकता:",
+                lbl_trained: "अंतिम प्रशिक्षित:",
+                card_db: "डेटाबेस",
+                lbl_conn: "कनेक्शन:",
+                val_connected: "जुड़ा हुआ",
+                lbl_qps: "क्वेरी प्रति सेकंड:",
+                lbl_storage: "भंडारण उपयोग:"
+            },
+            or: {
+                brand: "ପ୍ରବାହ ଟ୍ରାଫିକ୍ ନିୟନ୍ତ୍ରଣ",
+                sub_brand: "ସିଷ୍ଟମ୍ ସ୍ୱାସ୍ଥ୍ୟ ଏବଂ ସ୍ଥିତି",
+                btn_menu: "ମେନୁ",
+                btn_back: "ଡ୍ୟାସବୋର୍ଡକୁ ଫେରନ୍ତୁ",
+                status_ok: "ସମସ୍ତ ସିଷ୍ଟମ୍ କାର୍ଯ୍ୟକ୍ଷମ",
+                status_msg: "କୌଣସି ସମସ୍ୟା ମିଳିନାହିଁ | ଶେଷ ଯାଞ୍ଚ: କିଛି ସେକେଣ୍ଡ ପୂର୍ବରୁ |",
+                card_sensors: "ସେନ୍ସର ନେଟୱାର୍କ",
+                lbl_online: "ଅନ୍ ଲାଇନ୍ ସେନ୍ସର",
+                msg_sensor_off: "1 ସେନ୍ସର (S-108) ଅଫ୍ ଲାଇନ୍",
+                card_api: "API ଏବଂ ନେଟୱାର୍କ",
+                lbl_api_stat: "API ସ୍ଥିତି:",
+                val_healthy: "ସୁସ୍ଥ",
+                lbl_latency: "ହାରାହାରି ବିଳମ୍ବ:",
+                lbl_uptime: "ଅପ୍ ଟାଇମ୍ (24 ଘଣ୍ଟା):",
+                card_servers: "କୋର୍ ସର୍ଭର",
+                lbl_cpu: "CPU ଲୋଡ୍",
+                lbl_mem: "ମେମୋରୀ ବ୍ୟବହାର",
+                card_ai: "AI ପୂର୍ବାନୁମାନ ମଡେଲ୍",
+                lbl_svc_stat: "ସେବା ସ୍ଥିତି:",
+                val_active: "ସକ୍ରିୟ",
+                lbl_accuracy: "ପୂର୍ବାନୁମାନ ସଠିକତା:",
+                lbl_trained: "ଶେଷ ଟ୍ରେନିଂ:",
+                card_db: "ଡାଟାବେସ୍",
+                lbl_conn: "ସଂଯୋଗ:",
+                val_connected: "ସଂଯୁକ୍ତ",
+                lbl_qps: "ସେକେଣ୍ଡ ପ୍ରତି କ୍ୱେରୀ:",
+                lbl_storage: "ଷ୍ଟୋରେଜ୍ ବ୍ୟବହାର:"
+            }
+        };
+
+        const langToggle = document.getElementById('lang-toggle');
+
+        function updateLanguage(lang) {
+            // Update Body Class for Fonts
+            document.body.classList.remove('lang-hi', 'lang-or');
+            if (lang === 'hi') document.body.classList.add('lang-hi');
+            if (lang === 'or') document.body.classList.add('lang-or');
+
+            // Update Text
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[lang][key]) {
+                    el.innerText = translations[lang][key];
+                }
+            });
+        }
+
+        langToggle.addEventListener('change', (e) => {
+            localStorage.setItem('language', e.target.value);
+            updateLanguage(e.target.value);
+        });
+
+        const savedLang = localStorage.getItem('language') || 'en';
+        langToggle.value = savedLang;
+        updateLanguage(savedLang);
+    </script>
+</body>
+</html>

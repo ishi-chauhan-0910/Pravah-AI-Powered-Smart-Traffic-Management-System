@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emergency SOS - Control</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Noto+Sans+Oriya:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* CSS Variables */
+        :root {
+            --bg: #111827;
+            --card: #1f2937;
+            --border: rgba(255, 255, 255, 0.08);
+            --text-primary: #e5e7eb;
+            --text-secondary: #9ca3af;
+            --accent-blue: #60a5fa;
+            --accent-green: #4ade80;
+            --accent-yellow: #facc15;
+            --accent-red: #f87171;
+            --accent-purple: #a78bfa;
+        }
+        
+        /* Base Styles and Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body { 
+            background-color: var(--bg);
+            background-image: radial-gradient(circle at top, #1f2937, var(--bg));
+            font-family: 'Inter', sans-serif;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+            min-height: 100vh;
+        }
+        
+        body.lang-hi { font-family: 'Noto Sans Devanagari', sans-serif; }
+        body.lang-or { font-family: 'Noto Sans Oriya', sans-serif; }
+        
+        /* Top Bar Styling */
+        .topbar {
+            backdrop-filter: blur(8px);
+            background-color: rgba(17, 24, 39, 0.7);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #dc2626, #facc15);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+        }
+        
+        /* Language Selector Styling */
+        .lang-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            background: rgba(31, 41, 55, 0.8);
+            border: 1px solid var(--accent-blue);
+            border-radius: 0.5rem;
+            padding: 0.1rem 0.5rem;
+            box-shadow: 0 0 10px rgba(96, 165, 250, 0.2);
+        }
+        
+        .lang-select {
+            background: transparent;
+            color: white;
+            border: none;
+            font-size: 0.875rem;
+            font-weight: 600;
+            padding: 0.4rem 1.8rem 0.4rem 0.5rem;
+            appearance: none;
+            cursor: pointer;
+            outline: none;
+        }
+        
+        .lang-select option {
+            background-color: var(--card);
+            color: white;
+            padding: 8px;
+        }
+        
+        .lang-arrow {
+            position: absolute;
+            right: 0.5rem;
+            pointer-events: none;
+            color: var(--accent-blue);
+        }
+        
+        /* Main Layout */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        /* Card Styles */
+        .card {
+            background-color: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            margin-bottom: 1.5rem;
+        }
+        
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1);
+        }
+        
+        .header-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .header-info h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--accent-red), var(--accent-yellow));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        /* Status Badge */
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+            display: inline-block;
+        }
+        
+        .status-standby {
+            background-color: rgba(156, 163, 175, 0.2);
+            color: var(--text-secondary);
+            border: 1px solid var(--text-secondary);
+        }
+        
+        .status-active {
+            background-color: rgba(220, 38, 38, 0.2); /* Red background for Active SOS */
+            color: var(--accent-red);
+            border: 1px solid var(--accent-red);
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.05); }
+        }
+        
+        /* SOS Button Section */
+        .sos-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 3rem 2rem;
+        }
+        
+        .sos-button {
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            font-weight: 700;
+            color: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            user-select: none; /* Prevent text selection on rapid clicks */
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .sos-button.inactive {
+            background: linear-gradient(135deg, #dc2626, #b91c1c); /* Red Gradient */
+            box-shadow: 0 20px 60px rgba(220, 38, 38, 0.4);
+        }
+        
+        .sos-button.inactive:hover {
+            transform: scale(1.05);
+            box-shadow: 0 25px 70px rgba(220, 38, 38, 0.6);
+        }
+        
+        .sos-button:active {
+            transform: scale(0.95);
+        }
+        
+        .sos-button.active {
+            background: linear-gradient(135deg, #16a34a, #15803d); /* Green Gradient for "Active/Stop" */
+            box-shadow: 0 20px 60px rgba(74, 222, 128, 0.4);
+            animation: ripple 1.5s infinite;
+        }
+        
+        @keyframes ripple {
+            0% {
+                box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 40px rgba(220, 38, 38, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(220, 38, 38, 0);
+            }
+        }
+        
+        .sos-text {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .sos-subtitle {
+            font-size: 0.875rem;
+            font-weight: 500;
+            opacity: 0.9;
+        }
+        
+        /* Timer Styles */
+        .timer {
+            margin-top: 2rem;
+            text-align: center;
+        }
+        
+        .timer-display {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--accent-red);
+            font-variant-numeric: tabular-nums;
+        }
+        
+        .timer-label {
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+        
+        /* Info Grid Layout */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        /* Info Card Styles */
+        .info-card {
+            background-color: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .info-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+        }
+        
+        .info-card.blue::before { background: var(--accent-blue); }
+        .info-card.green::before { background: var(--accent-green); }
+        .info-card.purple::before { background: var(--accent-purple); }
+        
+        .info-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        
+        .icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+        
+        .icon.blue { background: rgba(96, 165, 250, 0.2); color: var(--accent-blue); }
+        .icon.green { background: rgba(74, 222, 128, 0.2); color: var(--accent-green); }
+        .icon.purple { background: rgba(167, 139, 250, 0.2); color: var(--accent-purple); }
+        
+        .info-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+        
+        .info-content {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+        
+        /* Location Data */
+        .location-data {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(96, 165, 250, 0.1);
+            border-radius: 0.5rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            color: var(--accent-blue);
+        }
+        
+        .location-data div {
+            margin: 0.25rem 0;
+        }
+        
+        /* Traffic Stats */
+        .traffic-stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem;
+        }
+        
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-green);
+        }
+        
+        /* Progress Bar */
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(74, 222, 128, 0.2);
+            border-radius: 1rem;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+        
+        .progress-fill {
+            width: 100%;
+            height: 100%;
+            background: var(--accent-green);
+            border-radius: 1rem;
+            animation: progress-blink 1s ease-in-out infinite;
+        }
+
+        @keyframes progress-blink {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+
+        /* Alert Badges */
+        .alert-badges {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: var(--accent-purple);
+            color: white;
+        }
+        
+        /* Instructions Section */
+        .instructions {
+            margin-top: 1rem;
+        }
+        
+        .instruction-item {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            align-items: start;
+        }
+        
+        .instruction-number {
+            width: 28px;
+            height: 28px;
+            background: var(--accent-red);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            flex-shrink: 0;
+            color: white;
+            font-size: 0.875rem;
+        }
+        
+        /* Utility */
+        .hidden {
+            display: none !important;
+        }
+        
+        /* Media Queries for Responsiveness */
+        @media (max-width: 768px) {
+            .topbar { padding: 1rem; }
+            .container { padding: 1rem; }
+            .sos-button { width: 200px; height: 200px; font-size: 2.5rem; }
+            .sos-text { font-size: 2.5rem; }
+            .header-card { flex-direction: column; text-align: center; }
+            .info-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="logo-section">
+            <div class="logo">🚑</div>
+            <div>
+                <h2 style="font-size: 1.25rem; font-weight: 600;">Emergency SOS</h2>
+                <p style="font-size: 0.75rem; color: var(--text-secondary);">Ambulance Control System</p>
+            </div>
+        </div>
+        <div class="lang-container">
+            <select class="lang-select" id="langSelect" onchange="changeLanguage()">
+                <option value="en">English</option>
+                <option value="hi">हिंदी</option>
+                <option value="or">ଓଡ଼ିଆ</option>
+            </select>
+            <span class="lang-arrow">▼</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="card header-card">
+            <div class="header-info">
+                <h1 id="mainTitle">Emergency Response System</h1>
+                <p style="color: var(--text-secondary);" id="subtitle">Real-time location tracking & traffic signal control</p>
+            </div>
+            <div>
+                <span class="status-badge status-standby" id="statusBadge">STANDBY</span>
+            </div>
+        </div>
+
+        <div class="card sos-section">
+            <button class="sos-button inactive" id="sosButton" onclick="toggleSOS()">
+                <span class="sos-text" id="sosText">SOS</span>
+                <span class="sos-subtitle" id="sosSubtext">Press for Emergency</span>
+            </button>
+            
+            <div class="timer hidden" id="timerSection">
+                <div class="timer-display" id="timerDisplay">0:00</div>
+                <div class="timer-label" id="timerLabel">Emergency Active</div>
+            </div>
+        </div>
+
+        <div class="info-grid hidden" id="statusGrid">
+            
+            <div class="info-card blue">
+                <div class="info-header">
+                    <div class="icon blue">📍</div>
+                    <div class="info-title" id="locationTitle">Current Location Transmitted</div>
+                </div>
+                <div class="info-content">
+                    <div id="locationStatus">Acquiring GPS signal...</div>
+                    <div class="location-data hidden" id="locationData">
+                        <div><strong>Latitude:</strong> <span id="latitude">-</span></div>
+                        <div><strong>Longitude:</strong> <span id="longitude">-</span></div>
+                        <div><strong>Accuracy:</strong> <span id="accuracy">-</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-card green">
+                <div class="info-header">
+                    <div class="icon green">🚦</div>
+                    <div class="info-title" id="trafficTitle">Traffic Signal Override</div>
+                </div>
+                <div class="info-content">
+                    <div class="traffic-stats">
+                        <div>
+                            <div class="stat-label" id="signalsLabel">Signals Cleared</div>
+                            <div class="stat-value" id="signalsCleared">0</div>
+                        </div>
+                        <div>
+                            <div class="stat-label" id="statusLabel">Status</div>
+                            <div style="color: var(--accent-green); font-weight: 600; margin-top: 0.5rem;">ACTIVE</div>
+                        </div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-card purple">
+                <div class="info-header">
+                    <div class="icon purple">📡</div>
+                    <div class="info-title" id="authorityTitle">Authority Alert</div>
+                </div>
+                <div class="info-content">
+                    <p id="authorityMsg">Traffic control center has been notified. Route optimization in progress.</p>
+                    <div class="alert-badges">
+                        <span class="badge">Control Room</span>
+                        <span class="badge">Police Dispatch</span>
+                        <span class="badge">Hospital</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" id="instructionsCard">
+            <h3 style="margin-bottom: 1.5rem; font-size: 1.25rem;" id="instructionsTitle">How to Use:</h3>
+            <div class="instructions">
+                <div class="instruction-item">
+                    <div class="instruction-number">1</div>
+                    <div id="inst1">Press the SOS button during medical emergency</div>
+                </div>
+                <div class="instruction-item">
+                    <div class="instruction-number">2</div>
+                    <div id="inst2">Your location will be transmitted to control center</div>
+                </div>
+                <div class="instruction-item">
+                    <div class="instruction-number">3</div>
+                    <div id="inst3">Traffic signals on your route will turn green automatically</div>
+                </div>
+                <div class="instruction-item">
+                    <div class="instruction-number">4</div>
+                    <div id="inst4">Press STOP button when emergency is resolved</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let sosActive = false;
+        let timerInterval = null;
+        let seconds = 0;
+        let signalsCleared = 0;
+        
+        // --- Audio Context for Alarm Sound ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playSiren() {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.type = 'sawtooth';
+            oscillator.frequency.setValueAtTime(440, audioCtx.currentTime); // Start low
+            oscillator.frequency.linearRampToValueAtTime(880, audioCtx.currentTime + 0.5); // Ramp High
+            oscillator.frequency.linearRampToValueAtTime(440, audioCtx.currentTime + 1.0); // Ramp Low
+            
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.0);
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 1.0);
+        }
+
+        const translations = {
+            en: {
+                mainTitle: "Emergency Response System",
+                subtitle: "Real-time location tracking & traffic signal control",
+                statusStandby: "STANDBY",
+                statusActive: "SOS ACTIVE",
+                sosText: "SOS",
+                sosStop: "STOP",
+                sosSubtext: "Press for Emergency",
+                sosStopText: "End Emergency",
+                timerLabel: "Emergency Active",
+                locationTitle: "Current Location Transmitted",
+                locationStatus: "Acquiring GPS signal...",
+                trafficTitle: "Traffic Signal Override",
+                signalsLabel: "Signals Cleared",
+                statusLabel: "Status",
+                authorityTitle: "Authority Alert",
+                authorityMsg: "Traffic control center has been notified. Route optimization in progress.",
+                instructionsTitle: "How to Use:",
+                inst1: "Press the SOS button during medical emergency",
+                inst2: "Your location will be transmitted to control center",
+                inst3: "Traffic signals on your route will turn green automatically",
+                inst4: "Press STOP button when emergency is resolved"
+            },
+            hi: {
+                mainTitle: "आपातकालीन प्रतिक्रिया प्रणाली",
+                subtitle: "वास्तविक समय स्थान ट्रैकिंग और यातायात सिग्नल नियंत्रण",
+                statusStandby: "प्रतीक्षा में",
+                statusActive: "आपातकाल सक्रिय",
+                sosText: "SOS",
+                sosStop: "बंद करें",
+                sosSubtext: "आपातकाल के लिए दबाएं",
+                sosStopText: "आपातकाल समाप्त करें",
+                timerLabel: "आपातकाल सक्रिय",
+                locationTitle: "वर्तमान स्थान प्रेषित",
+                locationStatus: "GPS सिग्नल प्राप्त कर रहे हैं...",
+                trafficTitle: "यातायात सिग्नल ओवरराइड",
+                signalsLabel: "सिग्नल साफ़ किए गए",
+                statusLabel: "स्थिति",
+                authorityTitle: "प्राधिकरण अलर्ट",
+                authorityMsg: "यातायात नियंत्रण केंद्र को सूचित कर दिया गया है। मार्ग अनुकूलन प्रगति पर है।",
+                instructionsTitle: "उपयोग कैसे करें:",
+                inst1: "चिकित्सा आपातकाल के दौरान SOS बटन दबाएं",
+                inst2: "आपका स्थान नियंत्रण केंद्र में प्रेषित होगा",
+                inst3: "आपके मार्ग पर यातायात सिग्नल स्वचालित रूप से हरे हो जाएंगे",
+                inst4: "आपातकाल समाप्त होने पर STOP बटन दबाएं"
+            },
+            or: {
+                mainTitle: "ଜରୁରୀକାଳୀନ ପ୍ରତିକ୍ରିୟା ବ୍ୟବସ୍ଥା",
+                subtitle: "ବାସ୍ତବ ସମୟ ଅବସ୍ଥାନ ଟ୍ରାକିଂ ଏବଂ ଟ୍ରାଫିକ୍ ସିଗ୍ନାଲ୍ ନିୟନ୍ତ୍ରଣ",
+                statusStandby: "ଅପେକ୍ଷା",
+                statusActive: "ସକ୍ରିୟ",
+                sosText: "SOS",
+                sosStop: "ବନ୍ଦ",
+                sosSubtext: "ଜରୁରୀକାଳୀନ ପାଇଁ ଦବାନ୍ତୁ",
+                sosStopText: "ଜରୁରୀକାଳୀନ ସମାପ୍ତ କରନ୍ତୁ",
+                timerLabel: "ଜରୁରୀକାଳୀନ ସକ୍ରିୟ",
+                locationTitle: "ବର୍ତ୍ତମାନର ଅବସ୍ଥାନ ପ୍ରେରିତ",
+                locationStatus: "GPS ସିଗ୍ନାଲ୍ ପ୍ରାପ୍ତ କରୁଛି...",
+                trafficTitle: "ଟ୍ରାଫିକ୍ ସିଗ୍ନାଲ୍ ଓଭରାଇଡ୍",
+                signalsLabel: "ସିଗ୍ନାଲ୍ ସଫା",
+                statusLabel: "ସ୍ଥିତି",
+                authorityTitle: "କର୍ତ୍ତୃପକ୍ଷ ସତର୍କତା",
+                authorityMsg: "ଟ୍ରାଫିକ୍ ନିୟନ୍ତ୍ରଣ କେନ୍ଦ୍ରକୁ ସୂଚନା ଦିଆଯାଇଛି। ମାର୍ଗ ଅପ୍ଟିମାଇଜେସନ୍ ପ୍ରଗତିରେ ଅଛି।",
+                instructionsTitle: "କିପରି ବ୍ୟବହାର କରିବେ:",
+                inst1: "ଚିକିତ୍ସା ଜରୁରୀକାଳୀନ ସମୟରେ SOS ବଟନ୍ ଦବାନ୍ତୁ",
+                inst2: "ଆପଣଙ୍କ ଅବସ୍ଥାନ ନିୟନ୍ତ୍ରଣ କେନ୍ଦ୍ରକୁ ପ୍ରେରିତ ହେବ",
+                inst3: "ଆପଣଙ୍କ ମାର୍ଗରେ ଟ୍ରାଫିକ୍ ସିଗ୍ନାଲ୍ ସ୍ୱୟଂଚାଳିତ ଭାବରେ ସବୁଜ ହୋଇଯିବ",
+                inst4: "ଜରୁରୀକାଳୀନ ସମାପ୍ତ ହେଲେ STOP ବଟନ୍ ଦବାନ୍ତୁ"
+            }
+        };
+
+        function changeLanguage() {
+            const lang = document.getElementById('langSelect').value;
+            document.body.className = `lang-${lang}`;
+            
+            const t = translations[lang];
+
+            // Update static texts
+            document.getElementById('mainTitle').textContent = t.mainTitle;
+            document.getElementById('subtitle').textContent = t.subtitle;
+            document.getElementById('locationTitle').textContent = t.locationTitle;
+            document.getElementById('trafficTitle').textContent = t.trafficTitle;
+            document.getElementById('signalsLabel').textContent = t.signalsLabel;
+            document.getElementById('statusLabel').textContent = t.statusLabel;
+            document.getElementById('authorityTitle').textContent = t.authorityTitle;
+            document.getElementById('authorityMsg').textContent = t.authorityMsg;
+            document.getElementById('instructionsTitle').textContent = t.instructionsTitle;
+            document.getElementById('inst1').textContent = t.inst1;
+            document.getElementById('inst2').textContent = t.inst2;
+            document.getElementById('inst3').textContent = t.inst3;
+            document.getElementById('inst4').textContent = t.inst4;
+            document.getElementById('timerLabel').textContent = t.timerLabel;
+            
+            // Update status texts based on current SOS state
+            if (sosActive) {
+                document.getElementById('statusBadge').textContent = t.statusActive;
+                document.getElementById('sosText').textContent = t.sosStop;
+                document.getElementById('sosSubtext').textContent = t.sosStopText;
+            } else {
+                document.getElementById('statusBadge').textContent = t.statusStandby;
+                document.getElementById('sosText').textContent = t.sosText;
+                document.getElementById('sosSubtext').textContent = t.sosSubtext;
+            }
+        }
+
+        function getCurrentLocation() {
+            if (navigator.geolocation) {
+                document.getElementById('locationStatus').classList.add('hidden');
+                document.getElementById('locationData').classList.remove('hidden');
+
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        displayLocation(position.coords.latitude, position.coords.longitude, position.coords.accuracy);
+                    },
+                    (error) => {
+                        // Fallback to simulated location if real GPS fails
+                        const lat = 28.6139 + (Math.random() - 0.5) * 0.1;
+                        const lng = 77.2090 + (Math.random() - 0.5) * 0.1;
+                        displayLocation(lat, lng, 10);
+                        console.error("Geolocation Error. Using simulated data:", error);
+                    }
+                );
+            } else {
+                const lat = 28.6139;
+                const lng = 77.2090;
+                displayLocation(lat, lng, 10);
+            }
+        }
+
+        function displayLocation(lat, lng, accuracy) {
+            document.getElementById('locationData').classList.remove('hidden');
+            document.getElementById('locationStatus').classList.add('hidden');
+            document.getElementById('latitude').textContent = lat.toFixed(6) + '°';
+            document.getElementById('longitude').textContent = lng.toFixed(6) + '°';
+            document.getElementById('accuracy').textContent = '±' + accuracy.toFixed(0) + 'm';
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                seconds++;
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                document.getElementById('timerDisplay').textContent = 
+                    `${mins}:${secs.toString().padStart(2, '0')}`;
+                
+                // Play Siren beep every 3 seconds to confirm active
+                if(seconds % 3 === 0) playSiren();
+                
+            }, 1000);
+        }
+
+        function startSignalSimulation() {
+            if (startSignalSimulation.signalInterval) {
+                clearInterval(startSignalSimulation.signalInterval);
+            }
+            startSignalSimulation.signalInterval = setInterval(() => {
+                if (sosActive && Math.random() > 0.6) {
+                    signalsCleared++;
+                    document.getElementById('signalsCleared').textContent = signalsCleared;
+                }
+            }, 2000);
+        }
+        
+        function toggleSOS() {
+            const lang = document.getElementById('langSelect').value;
+            const t = translations[lang];
+            
+            // FIX: Added logic to check state
+            if (!sosActive) {
+                // --- Activate SOS ---
+                sosActive = true;
+                
+                // Send Signal to Dashboard via LocalStorage
+                localStorage.setItem('sos_active', 'true');
+                localStorage.setItem('sos_timestamp', Date.now());
+                
+                playSiren(); // Play immediate sound
+                
+                // UI Changes
+                document.getElementById('sosButton').classList.remove('inactive');
+                document.getElementById('sosButton').classList.add('active');
+                document.getElementById('statusBadge').classList.remove('status-standby');
+                document.getElementById('statusBadge').classList.add('status-active');
+                
+                document.getElementById('statusBadge').textContent = t.statusActive;
+                document.getElementById('sosText').textContent = t.sosStop;
+                document.getElementById('sosSubtext').textContent = t.sosStopText;
+
+                // Show information
+                document.getElementById('timerSection').classList.remove('hidden');
+                document.getElementById('statusGrid').classList.remove('hidden');
+                document.getElementById('instructionsCard').classList.add('hidden');
+                
+                // Start tracking/simulation
+                seconds = 0;
+                signalsCleared = 0;
+                document.getElementById('signalsCleared').textContent = '0';
+                startTimer();
+                getCurrentLocation();
+                startSignalSimulation();
+                
+            } else {
+                // --- Deactivate SOS ---
+                sosActive = false;
+                
+                // Send Off Signal
+                localStorage.setItem('sos_active', 'false');
+                
+                // UI Changes
+                document.getElementById('sosButton').classList.remove('active');
+                document.getElementById('sosButton').classList.add('inactive');
+                document.getElementById('statusBadge').classList.remove('status-active');
+                document.getElementById('statusBadge').classList.add('status-standby');
+
+                document.getElementById('statusBadge').textContent = t.statusStandby;
+                document.getElementById('sosText').textContent = t.sosText;
+                document.getElementById('sosSubtext').textContent = t.sosSubtext;
+
+                // Hide information
+                document.getElementById('timerSection').classList.add('hidden');
+                document.getElementById('statusGrid').classList.add('hidden');
+                document.getElementById('instructionsCard').classList.remove('hidden');
+
+                // Stop tracking/simulation
+                clearInterval(timerInterval);
+                clearInterval(startSignalSimulation.signalInterval);
+                timerInterval = null;
+                seconds = 0;
+                
+                // Reset location display state
+                document.getElementById('locationData').classList.add('hidden');
+                document.getElementById('locationStatus').classList.remove('hidden');
+                document.getElementById('locationStatus').textContent = t.locationStatus;
+            }
+        }
+
+        // Initialize language and UI state on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            changeLanguage();
+        });
+    </script>
+</body>
+</html>

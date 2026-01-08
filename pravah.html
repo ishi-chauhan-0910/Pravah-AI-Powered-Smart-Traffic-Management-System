@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pravah - Intelligent Traffic Solutions</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Noto+Sans+Oriya:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* Font Handling */
+    body { font-family: 'Noto Sans', sans-serif; }
+    body.lang-hi { font-family: 'Noto Sans Devanagari', sans-serif; }
+    body.lang-or { font-family: 'Noto Sans Oriya', sans-serif; }
+
+    .hero-flow {
+      background: linear-gradient(90deg, #3b82f6, #22c55e, #06b6d4);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .flow-line { animation: flow 5s infinite linear; }
+    @keyframes flow {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+    .slide-up { animation: slideUp 1s ease-out forwards; }
+    @keyframes slideUp {
+      0% { transform: translateY(20px); opacity: 0; }
+      100% { transform: translateY(0); opacity: 1; }
+    }
+    .traffic-signal { animation: trafficSignal 1.5s infinite; }
+    @keyframes trafficSignal {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+    .fade-in { animation: fadeIn 1s ease-out forwards; }
+    @keyframes fadeIn {
+      0% { opacity: 0; }
+      100% { opacity: 1; }
+    }
+    .pulse { animation: pulse 1.5s infinite; }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+  </style>
+</head>
+<body class="bg-gray-100 font-sans overflow-x-hidden transition-all duration-300">
+
+  <nav class="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
+      <div class="flex-shrink-0 flex items-center space-x-3">
+        <svg class="h-8 w-8 traffic-signal" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="8" stroke-width="2"></circle>
+        </svg>
+        <span class="text-xl font-bold hero-flow" data-i18n="brand">Pravah</span>
+      </div>
+      <div class="hidden md:block">
+        <div class="ml-10 flex items-center space-x-6">
+          <a href="#about" class="text-gray-700 hover:text-blue-600 transition-colors duration-300 text-sm font-medium relative group" data-i18n="nav_about">About Pravah</a>
+          <a href="#services" class="text-gray-700 hover:text-blue-600 transition-colors duration-300 text-sm font-medium relative group" data-i18n="nav_services">Services</a>
+          <a href="#novelty" class="text-gray-700 hover:text-blue-600 transition-colors duration-300 text-sm font-medium relative group" data-i18n="nav_novelty">Novelty</a>
+          <a href="#sustainability" class="text-gray-700 hover:text-blue-600 transition-colors duration-300 text-sm font-medium relative group" data-i18n="nav_sustainability">Sustainability</a>
+          <a href="#impact" class="text-gray-700 hover:text-blue-600 transition-colors duration-300 text-sm font-medium relative group" data-i18n="nav_impact">Impact</a>
+          <a href="#demo" class="text-gray-700 hover:text-blue-600 transition-colors duration-300 text-sm font-medium relative group" data-i18n="nav_demo">Demo</a>
+          
+          <div class="relative border-l pl-6 border-gray-300">
+              <select id="lang-selector" class="bg-transparent text-sm font-medium text-gray-700 focus:outline-none cursor-pointer">
+                  <option value="en">English</option>
+                  <option value="hi">हिंदी (Hindi)</option>
+                  <option value="or">ଓଡ଼ିଆ (Odia)</option>
+              </select>
+          </div>
+
+          <a href="login.html" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition duration-300 text-sm" data-i18n="nav_started">Get Started</a>
+        </div>
+      </div>
+      <button id="mobile-menu-toggle" class="md:hidden text-gray-700 hover:text-blue-600">
+        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+        </svg>
+      </button>
+    </div>
+    
+    <div id="mobile-menu" class="md:hidden hidden bg-white/95 backdrop-blur-md border-t border-gray-200">
+        <div class="px-4 pt-2 pb-3 space-y-1">
+            <a href="#about" class="block text-gray-700 hover:text-blue-600 py-2 text-sm font-medium" data-i18n="nav_about">About Pravah</a>
+            <a href="#services" class="block text-gray-700 hover:text-blue-600 py-2 text-sm font-medium" data-i18n="nav_services">Services</a>
+            <a href="#novelty" class="block text-gray-700 hover:text-blue-600 py-2 text-sm font-medium" data-i18n="nav_novelty">Novelty</a>
+            <a href="#sustainability" class="block text-gray-700 hover:text-blue-600 py-2 text-sm font-medium" data-i18n="nav_sustainability">Sustainability</a>
+            <a href="#impact" class="block text-gray-700 hover:text-blue-600 py-2 text-sm font-medium" data-i18n="nav_impact">Impact</a>
+            <a href="#demo" class="block text-gray-700 hover:text-blue-600 py-2 text-sm font-medium" data-i18n="nav_demo">Demo</a>
+            <div class="py-2">
+                <select id="mobile-lang-selector" class="w-full bg-gray-50 border border-gray-200 rounded p-2 text-sm">
+                    <option value="en">English</option>
+                    <option value="hi">हिंदी (Hindi)</option>
+                    <option value="or">ଓଡ଼ିଆ (Odia)</option>
+                </select>
+            </div>
+            <button class="w-full mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition duration-300" data-i18n="nav_started">Get Started</button>
+        </div>
+    </div>
+  </nav>
+
+  <section class="relative min-h-screen flex items-center justify-center bg-gray-100 overflow-hidden pt-16">
+    <canvas id="flowing-background" class="absolute inset-0 pointer-events-none opacity-30"></canvas>
+    <div class="absolute inset-0 bg-gradient-to-t from-gray-100 to-transparent z-10"></div>
+    <div class="relative z-20 container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <div class="max-w-4xl mx-auto">
+        <div class="inline-flex items-center px-4 py-2 rounded-full bg-blue-100 border border-blue-200 mb-8 slide-up">
+          <span class="w-2 h-2 bg-blue-600 rounded-full mr-2 animate-pulse"></span>
+          <span class="text-sm font-medium text-blue-600" data-i18n="hero_badge">AI-Powered Traffic Intelligence</span>
+        </div>
+        <h1 class="text-5xl md:text-7xl font-bold mb-6 slide-up">
+          <span class="hero-flow" data-i18n="hero_line1">Smarter Traffic,</span><br />
+          <span class="text-gray-900" data-i18n="hero_line2">Greener Cities,</span><br />
+          <span class="hero-flow" data-i18n="hero_line3">Smoother Lives</span>
+        </h1>
+        <p class="text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto slide-up" data-i18n="hero_desc">
+          Revolutionizing urban mobility with AI-driven traffic management. Real-time optimization meets predictive intelligence for the cities of tomorrow.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center mb-12 slide-up">
+          <button class="bg-blue-600 text-white px-8 py-4 rounded-lg hover:bg-blue-700 transition duration-300 flex items-center justify-center gap-2">
+            <span data-i18n="btn_explore">Explore Our Solution</span>
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+          </button>
+          <button class="border border-blue-200 text-blue-600 px-8 py-4 rounded-lg hover:bg-blue-50 transition duration-300 flex items-center justify-center gap-2">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <span data-i18n="btn_watch">Watch Demo</span>
+          </button>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+          <div class="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-gray-200 hover:border-blue-200 transition duration-300 slide-up">
+            <svg class="h-12 w-12 text-blue-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1 1 0 01-1.414 0l-4.243-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            <div class="text-2xl font-bold text-blue-600 mb-2">22%</div>
+            <div class="text-sm text-gray-600" data-i18n="stat_delay">Reduction in Delays</div>
+          </div>
+          <div class="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-gray-200 hover:border-blue-200 transition duration-300 slide-up" style="animation-delay: 0.2s">
+            <svg class="h-12 w-12 text-green-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            <div class="text-2xl font-bold text-green-600 mb-2">35%</div>
+            <div class="text-sm text-gray-600" data-i18n="stat_fuel">Fuel Savings</div>
+          </div>
+          <div class="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-gray-200 hover:border-blue-200 transition duration-300 slide-up" style="animation-delay: 0.4s">
+            <svg class="h-12 w-12 text-cyan-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            <div class="text-2xl font-bold text-cyan-600 mb-2">50%</div>
+            <div class="text-sm text-gray-600" data-i18n="stat_emergency">Faster Emergency Response</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="absolute bottom-0 left-0 right-0 h-32 overflow-hidden">
+      <div class="absolute inset-0 bg-gradient-to-t from-gray-100 to-transparent"></div>
+      <svg class="absolute bottom-0 w-full h-24" viewBox="0 0 1200 120" preserveAspectRatio="none">
+        <path d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,133.3C960,128,1056,96,1152,85.3L1200,80L1200,120L1152,120C1056,120,960,120,864,120C768,120,672,120,576,120C480,120,384,120,288,120C192,120,96,120,48,120L0,120Z" class="fill-current text-blue-600/20"></path>
+        <path d="M0,64L48,74.7C96,85,192,107,288,112C384,117,480,107,576,96C672,85,768,75,864,80C960,85,1056,107,1152,112L1200,117L1200,120L1152,120C1056,120,960,120,864,120C768,120,672,120,576,120C480,120,384,120,288,120C192,120,96,120,48,120L0,120Z" class="fill-current text-green-600/30 flow-line"></path>
+      </svg>
+    </div>
+  </section>
+
+  <section id="about" class="py-24 bg-gray-200/30">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-16">
+        <div class="inline-flex items-center px-4 py-2 rounded-full bg-blue-100 border border-blue-200 mb-6">
+          <span class="text-sm font-medium text-blue-600" data-i18n="about_tag">About Pravah</span>
+        </div>
+        <h2 class="text-4xl md:text-5xl font-bold mb-6">
+          <span data-i18n="about_title1">Transforming Cities Through</span>
+          <span class="bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent block" data-i18n="about_title2">Intelligent Flow</span>
+        </h2>
+        <p class="text-xl text-gray-600 max-w-3xl mx-auto" data-i18n="about_desc">
+          We don't just solve congestion—we reimagine how cities move. Pravah combines cutting-edge AI with deep understanding of urban dynamics to create traffic systems that learn, adapt, and evolve.
+        </p>
+      </div>
+      <div class="max-w-4xl mx-auto mb-16">
+        <div class="relative">
+          <div class="absolute left-1/2 transform -translate-x-1/2 w-1 h-full bg-gradient-to-b from-blue-600 via-green-600 to-cyan-600 rounded-full"></div>
+          <div class="space-y-16">
+            <div class="flex items-center">
+              <div class="flex-1 text-right pr-8">
+                <h3 class="text-xl font-semibold text-red-600 mb-2" data-i18n="prob_title">The Problem</h3>
+                <p class="text-gray-600" data-i18n="prob_desc">Urban congestion costs cities billions annually. Traditional traffic systems react too slowly, causing cascading delays, wasted fuel, and frustrated commuters.</p>
+              </div>
+              <div class="w-4 h-4 bg-red-600 rounded-full border-4 border-white z-10"></div>
+              <div class="flex-1 pl-8"></div>
+            </div>
+            <div class="flex items-center">
+              <div class="flex-1 pr-8"></div>
+              <div class="w-4 h-4 bg-yellow-600 rounded-full border-4 border-white z-10"></div>
+              <div class="flex-1 pl-8">
+                <h3 class="text-xl font-semibold text-yellow-600 mb-2" data-i18n="limit_title">Current Limitations</h3>
+                <p class="text-gray-600" data-i18n="limit_desc">Fixed timing systems can't adapt to real conditions. Emergency vehicles get stuck in traffic. Cities struggle to balance efficiency with environmental goals.</p>
+              </div>
+            </div>
+            <div class="flex items-center">
+              <div class="flex-1 text-right pr-8">
+                <h3 class="text-xl font-semibold text-blue-600 mb-2" data-i18n="innov_title">Pravah's Innovation</h3>
+                <p class="text-gray-600" data-i18n="innov_desc">Our AI learns from every vehicle, every pattern, every change. It predicts, adapts, and optimizes in real-time, creating a living traffic nervous system.</p>
+              </div>
+              <div class="w-4 h-4 bg-blue-600 rounded-full border-4 border-white z-10 animate-pulse"></div>
+              <div class="flex-1 pl-8"></div>
+            </div>
+            <div class="flex items-center">
+              <div class="flex-1 pr-8"></div>
+              <div class="w-4 h-4 bg-green-600 rounded-full border-4 border-white z-10"></div>
+              <div class="flex-1 pl-8">
+                <h3 class="text-xl font-semibold text-green-600 mb-2" data-i18n="future_title">Future Impact</h3>
+                <p class="text-gray-600" data-i18n="future_desc">Smoother commutes, cleaner air, faster emergency response, and happier citizens. This is the future of urban mobility.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div class="bg-white/80 backdrop-blur-sm rounded-xl p-8 border border-gray-200 hover:border-blue-200 transition duration-300 slide-up">
+          <div class="flex items-center mb-6">
+            <div class="w-12 h-12 bg-blue-100 rounded-xl mr-4 flex items-center justify-center">
+              <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+            </div>
+            <h3 class="text-xl font-semibold" data-i18n="feat_ai">AI-Driven Intelligence</h3>
+          </div>
+          <p class="text-gray-600 leading-relaxed" data-i18n="feat_ai_txt">Advanced machine learning algorithms analyze traffic patterns in real-time, making split-second decisions to optimize flow.</p>
+        </div>
+        <div class="bg-white/80 backdrop-blur-sm rounded-xl p-8 border border-gray-200 hover:border-blue-200 transition duration-300 slide-up" style="animation-delay: 0.1s">
+          <div class="flex items-center mb-6">
+            <div class="w-12 h-12 bg-green-100 rounded-xl mr-4 flex items-center justify-center">
+              <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+            <h3 class="text-xl font-semibold" data-i18n="feat_pred">Predictive Analytics</h3>
+          </div>
+          <p class="text-gray-600 leading-relaxed" data-i18n="feat_pred_txt">Our system forecasts congestion before it happens, proactively adjusting signals and routing to prevent bottlenecks.</p>
+        </div>
+        <div class="bg-white/80 backdrop-blur-sm rounded-xl p-8 border border-gray-200 hover:border-blue-200 transition duration-300 slide-up" style="animation-delay: 0.2s">
+          <div class="flex items-center mb-6">
+            <div class="w-12 h-12 bg-emerald-100 rounded-xl mr-4 flex items-center justify-center">
+              <svg class="h-6 w-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3v18h18V3H3zm6 6h6v6H9V9z"></path></svg>
+            </div>
+            <h3 class="text-xl font-semibold" data-i18n="feat_env">Environmental Focus</h3>
+          </div>
+          <p class="text-gray-600 leading-relaxed" data-i18n="feat_env_txt">Reduce emissions by up to 35% through optimized traffic flow, supporting your city's sustainability goals.</p>
+        </div>
+        <div class="bg-white/80 backdrop-blur-sm rounded-xl p-8 border border-gray-200 hover:border-blue-200 transition duration-300 slide-up" style="animation-delay: 0.3s">
+          <div class="flex items-center mb-6">
+            <div class="w-12 h-12 bg-purple-100 rounded-xl mr-4 flex items-center justify-center">
+              <svg class="h-6 w-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354l-2.5 2.5m0 0L7.854 9m2.646-2.646L12 4.354m5.146 5.146l-2.5-2.5m0 0L14.146 7m2.646-2.646l-2.5-2.5m0 0L12 4.354m-7.5 7.5v-3a3 3 0 013-3h3"></path></svg>
+            </div>
+            <h3 class="text-xl font-semibold" data-i18n="feat_emer">Emergency Priority</h3>
+          </div>
+          <p class="text-gray-600 leading-relaxed" data-i18n="feat_emer_txt">Ambulances, fire trucks, and emergency services get instant green corridors, saving precious minutes and lives.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="services" class="py-24 bg-gradient-to-br from-gray-100 via-gray-100/95 to-blue-600/5">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-16">
+        <div class="inline-flex items-center px-4 py-2 rounded-full bg-blue-100 border border-blue-200 mb-6">
+          <span class="text-sm font-medium text-blue-600" data-i18n="serv_tag">Our Services</span>
+        </div>
+        <h2 class="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent mb-6" data-i18n="serv_title">Intelligent Traffic Solutions</h2>
+        <p class="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed" data-i18n="serv_desc">We solve not just congestion, but wasted time, fuel, and emissions through AI-powered innovation.</p>
+      </div>
+      <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-20">
+        <div class="bg-white/80 backdrop-blur-sm rounded-xl p-8 border border-gray-200 hover:border-blue-200 transition duration-500 hover:scale-105 hover:shadow-xl fade-in">
+          <div class="w-12 h-12 bg-emerald-500/10 rounded-lg flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+          </div>
+          <h3 class="text-xl font-semibold" data-i18n="s1_title">Real-time Mitigation</h3>
+          <p class="text-gray-600 mb-4 leading-relaxed" data-i18n="s1_desc">AI-powered signal optimization that adapts instantly to traffic conditions, prioritizing emergency vehicles.</p>
+          <ul class="space-y-2">
+            <li class="flex items-center text-sm"><div class="w-1.5 h-1.5 bg-blue-600 rounded-full mr-3"></div><span data-i18n="s1_li1">Dynamic signal timing</span></li>
+            <li class="flex items-center text-sm"><div class="w-1.5 h-1.5 bg-blue-600 rounded-full mr-3"></div><span data-i18n="s1_li2">Emergency vehicle priority</span></li>
+          </ul>
+        </div>
+        <div class="bg-white/80 backdrop-blur-sm rounded-xl p-8 border border-gray-200 hover:border-blue-200 transition duration-500 hover:scale-105 hover:shadow-xl fade-in" style="animation-delay: 0.2s">
+          <div class="w-12 h-12 bg-blue-500/10 rounded-lg flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          </div>
+          <h3 class="text-xl font-semibold" data-i18n="s2_title">Predictive Optimization</h3>
+          <p class="text-gray-600 mb-4 leading-relaxed" data-i18n="s2_desc">Advanced forecasting models that prevent congestion before it happens using machine learning.</p>
+          <ul class="space-y-2">
+            <li class="flex items-center text-sm"><div class="w-1.5 h-1.5 bg-blue-600 rounded-full mr-3"></div><span data-i18n="s2_li1">Traffic prediction</span></li>
+            <li class="flex items-center text-sm"><div class="w-1.5 h-1.5 bg-blue-600 rounded-full mr-3"></div><span data-i18n="s2_li2">Congestion prevention</span></li>
+          </ul>
+        </div>
+        <div class="bg-white/80 backdrop-blur-sm rounded-xl p-8 border border-gray-200 hover:border-blue-200 transition duration-500 hover:scale-105 hover:shadow-xl fade-in" style="animation-delay: 0.4s">
+          <div class="w-12 h-12 bg-purple-500/10 rounded-lg flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V17a2 2 0 01-2 2z"></path></svg>
+          </div>
+          <h3 class="text-xl font-semibold" data-i18n="s3_title">Fleet Solutions</h3>
+          <p class="text-gray-600 mb-4 leading-relaxed" data-i18n="s3_desc">Intelligent routing for delivery vehicles and public transport to maximize efficiency.</p>
+           <ul class="space-y-2">
+            <li class="flex items-center text-sm"><div class="w-1.5 h-1.5 bg-blue-600 rounded-full mr-3"></div><span data-i18n="s3_li1">Smart routing</span></li>
+            <li class="flex items-center text-sm"><div class="w-1.5 h-1.5 bg-blue-600 rounded-full mr-3"></div><span data-i18n="s3_li2">Fleet management</span></li>
+          </ul>
+        </div>
+        <div class="bg-white/80 backdrop-blur-sm rounded-xl p-8 border border-gray-200 hover:border-blue-200 transition duration-500 hover:scale-105 hover:shadow-xl fade-in" style="animation-delay: 0.6s">
+          <div class="w-12 h-12 bg-orange-500/10 rounded-lg flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0-1.1.9-2 2-2s2 .9 2 2-2 4-2 4-2-2.9-2-4zM12 13a1 1 0 100-2 1 1 0 000 2z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"></path></svg>
+          </div>
+          <h3 class="text-xl font-semibold" data-i18n="s4_title">Citizen App</h3>
+          <p class="text-gray-600 mb-4 leading-relaxed" data-i18n="s4_desc">Personalized travel recommendations and real-time updates for commuters.</p>
+           <ul class="space-y-2">
+            <li class="flex items-center text-sm"><div class="w-1.5 h-1.5 bg-blue-600 rounded-full mr-3"></div><span data-i18n="s4_li1">Personalized timing</span></li>
+            <li class="flex items-center text-sm"><div class="w-1.5 h-1.5 bg-blue-600 rounded-full mr-3"></div><span data-i18n="s4_li2">Route suggestions</span></li>
+          </ul>
+        </div>
+      </div>
+      <div class="relative">
+        <div class="text-center mb-12">
+          <h3 class="text-3xl font-bold mb-4" data-i18n="journey_head">The Journey to Smarter Cities</h3>
+          <div class="flex justify-center items-center space-x-4 mb-8">
+            <button id="problem-btn" class="px-6 py-3 rounded-lg bg-red-600 text-white transition duration-300" data-i18n="btn_prob">The Problem Today</button>
+            <button id="solution-btn" class="px-6 py-3 rounded-lg bg-gray-200 text-gray-600 hover:bg-blue-600 hover:text-white transition duration-300" data-i18n="btn_sol">With Pravah AI</button>
+          </div>
+        </div>
+        <div id="journey-container" class="bg-gradient-to-r from-gray-100 to-blue-600/5 rounded-2xl p-8 min-h-[400px] overflow-hidden">
+          <div id="problem-state" class="space-y-6 fade-in">
+            <div class="text-center">
+              <svg class="w-16 h-16 text-red-600 mx-auto mb-4 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+              <h4 class="text-2xl font-semibold text-red-600 mb-2" data-i18n="chaos_title">Current Traffic Chaos</h4>
+              <p class="text-gray-600" data-i18n="chaos_desc">Fixed signals, unpredictable delays, wasted resources</p>
+            </div>
+            <div class="grid md:grid-cols-3 gap-6">
+              <div class="text-center">
+                <svg class="w-8 h-8 text-red-500 mx-auto mb-2 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V17a2 2 0 01-2 2z"></path></svg>
+                <div class="text-red-500 font-semibold" data-i18n="chaos_s1">+45 min delays</div>
+                <div class="text-sm text-gray-600" data-i18n="chaos_s1_d">Average commute time increase</div>
+              </div>
+              <div class="text-center">
+                <svg class="w-8 h-8 text-red-500 mx-auto mb-2 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                <div class="text-red-500 font-semibold" data-i18n="chaos_s2">30% more emissions</div>
+                <div class="text-sm text-gray-600" data-i18n="chaos_s2_d">Due to idling vehicles</div>
+              </div>
+              <div class="text-center">
+                <svg class="w-8 h-8 text-red-500 mx-auto mb-2 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <div class="text-red-500 font-semibold" data-i18n="chaos_s3">20 min lost</div>
+                <div class="text-sm text-gray-600" data-i18n="chaos_s3_d">For emergency response</div>
+              </div>
+            </div>
+          </div>
+          <div id="solution-state" class="space-y-6 fade-in hidden">
+            <div class="text-center">
+              <svg class="w-16 h-16 text-blue-600 mx-auto mb-4 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V17a2 2 0 01-2 2z"></path></svg>
+              <h4 class="text-2xl font-semibold text-blue-600 mb-2" data-i18n="sol_title">Optimized Traffic Flow</h4>
+              <p class="text-gray-600" data-i18n="sol_desc">Dynamic, AI-driven solutions for a smoother future</p>
+            </div>
+            <div class="grid md:grid-cols-3 gap-6">
+              <div class="text-center">
+                <svg class="w-8 h-8 text-blue-500 mx-auto mb-2 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V17a2 2 0 01-2 2z"></path></svg>
+                <div class="text-blue-500 font-semibold" data-i18n="sol_s1">22% less delays</div>
+                <div class="text-sm text-gray-600" data-i18n="sol_s1_d">Improved commute times</div>
+              </div>
+              <div class="text-center">
+                <svg class="w-8 h-8 text-green-500 mx-auto mb-2 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                <div class="text-green-500 font-semibold" data-i18n="sol_s2">35% fuel savings</div>
+                <div class="text-sm text-gray-600" data-i18n="sol_s2_d">Reduced emissions</div>
+              </div>
+              <div class="text-center">
+                <svg class="w-8 h-8 text-cyan-500 mx-auto mb-2 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <div class="text-cyan-500 font-semibold" data-i18n="sol_s3">50% faster</div>
+                <div class="text-sm text-gray-600" data-i18n="sol_s3_d">Emergency response time</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="impact" class="py-24 bg-gradient-to-br from-blue-600/5 to-gray-100">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-16">
+        <div class="inline-flex items-center px-4 py-2 rounded-full bg-blue-100 border border-blue-200 mb-6">
+          <span class="text-sm font-medium text-blue-600" data-i18n="imp_tag">Our Impact</span>
+        </div>
+        <h2 class="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent mb-6" data-i18n="imp_title">Making a Difference</h2>
+        <p class="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed" data-i18n="imp_desc">Pravah’s technology is transforming urban landscapes, delivering measurable benefits to cities and their citizens.</p>
+      </div>
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div class="bg-white/80 backdrop-blur-sm rounded-xl p-8 border border-gray-200 hover:border-blue-200 transition duration-300 slide-up">
+          <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1 1 0 01-1.414 0l-4.243-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+          </div>
+          <h3 class="text-xl font-semibold" data-i18n="is1_title">22% Reduced Delays</h3>
+          <p class="text-gray-600 mt-2" data-i18n="is1_desc">Shorter commutes and less waiting time for drivers across implemented zones.</p>
+        </div>
+        <div class="bg-white/80 backdrop-blur-sm rounded-xl p-8 border border-gray-200 hover:border-blue-200 transition duration-300 slide-up" style="animation-delay: 0.1s">
+          <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+          </div>
+          <h3 class="text-xl font-semibold" data-i18n="is2_title">35% Fuel Savings</h3>
+          <p class="text-gray-600 mt-2" data-i18n="is2_desc">Lower fuel consumption leading to significant cost savings and reduced emissions.</p>
+        </div>
+        <div class="bg-white/80 backdrop-blur-sm rounded-xl p-8 border border-gray-200 hover:border-blue-200 transition duration-300 slide-up" style="animation-delay: 0.2s">
+          <div class="w-12 h-12 bg-cyan-100 rounded-lg flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+          </div>
+          <h3 class="text-xl font-semibold" data-i18n="is3_title">50% Faster Emergencies</h3>
+          <p class="text-gray-600 mt-2" data-i18n="is3_desc">Critical response times improved with prioritized green corridors.</p>
+        </div>
+        <div class="bg-white/80 backdrop-blur-sm rounded-xl p-8 border border-gray-200 hover:border-blue-200 transition duration-300 slide-up" style="animation-delay: 0.3s">
+          <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354l-2.5 2.5m0 0L7.854 9m2.646-2.646L12 4.354m5.146 5.146l-2.5-2.5m0 0L14.146 7m2.646-2.646l-2.5-2.5m0 0L12 4.354m-7.5 7.5v-3a3 3 0 013-3h3"></path></svg>
+          </div>
+          <h3 class="text-xl font-semibold" data-i18n="is4_title">90% User Satisfaction</h3>
+          <p class="text-gray-600 mt-2" data-i18n="is4_desc">Citizens report happier commutes with our intelligent traffic app.</p>
+        </div>
+        <div class="bg-white/80 backdrop-blur-sm rounded-xl p-8 border border-gray-200 hover:border-blue-200 transition duration-300 slide-up" style="animation-delay: 0.4s">
+          <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          </div>
+          <h3 class="text-xl font-semibold" data-i18n="is5_title">15% Traffic Volume</h3>
+          <p class="text-gray-600 mt-2" data-i18n="is5_desc">Increased capacity on existing roads with optimized flow.</p>
+        </div>
+        <div class="bg-white/80 backdrop-blur-sm rounded-xl p-8 border border-gray-200 hover:border-blue-200 transition duration-300 slide-up" style="animation-delay: 0.5s">
+          <div class="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3v18h18V3H3zm6 6h6v6H9V9z"></path></svg>
+          </div>
+          <h3 class="text-xl font-semibold" data-i18n="is6_title">40% Less Congestion</h3>
+          <p class="text-gray-600 mt-2" data-i18n="is6_desc">Significant reduction in peak-hour traffic jams.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="bg-gray-900 text-white py-12">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid md:grid-cols-4 gap-8">
+        <div>
+          <h3 class="text-xl font-semibold mb-4 hero-flow" data-i18n="brand">Pravah</h3>
+          <p class="text-gray-400" data-i18n="foot_desc">Revolutionizing urban mobility with AI-driven traffic solutions.</p>
+        </div>
+        <div>
+          <h4 class="text-lg font-semibold mb-4" data-i18n="foot_links">Quick Links</h4>
+          <ul class="space-y-2">
+            <li><a href="#about" class="text-gray-400 hover:text-blue-400 transition duration-300" data-i18n="nav_about">About Us</a></li>
+            <li><a href="#services" class="text-gray-400 hover:text-blue-400 transition duration-300" data-i18n="nav_services">Services</a></li>
+            <li><a href="#impact" class="text-gray-400 hover:text-blue-400 transition duration-300" data-i18n="nav_impact">Impact</a></li>
+            <li><a href="#demo" class="text-gray-400 hover:text-blue-400 transition duration-300" data-i18n="nav_demo">Demo</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-lg font-semibold mb-4" data-i18n="foot_contact">Contact</h4>
+          <p class="text-gray-400">Email: info@pravah.ai</p>
+          <p class="text-gray-400">Phone: +91-123-456-7890</p>
+          <p class="text-gray-400" data-i18n="foot_loc">Mumbai, India</p>
+        </div>
+        <div>
+          <h4 class="text-lg font-semibold mb-4" data-i18n="foot_conn">Stay Connected</h4>
+          <div class="flex space-x-4">
+            <a href="#" class="text-gray-400 hover:text-blue-400 transition duration-300">
+              <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-2.717 0-4.92 2.203-4.92 4.917 0 .386.045.762.127 1.124C7.691 8.094 4.066 6.13 1.64 3.161c-.427.733-.666 1.585-.666 2.475 0 1.71.87 3.213 2.188 4.096-.807-.026-1.566-.248-2.228-.616v.061c0 2.385 1.693 4.374 3.946 4.827-.413.111-.849.171-1.296.171-.314 0-.615-.03-.916-.086.631 1.953 2.445 3.377 4.604 3.417-1.68 1.319-3.809 2.105-6.102 2.105-.396 0-.788-.023-1.175-.068 2.187 1.405 4.788 2.224 7.582 2.224 9.055 0 14.012-7.496 14.012-13.986 0-.209 0-.42-.015-.63.962-.695 1.8-1.562 2.457-2.549z"></path></svg>
+            </a>
+            <a href="#" class="text-gray-400 hover:text-blue-400 transition duration-300">
+              <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.618 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.919-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"></path></svg>
+            </a>
+            <a href="#" class="text-gray-400 hover:text-blue-400 transition duration-300">
+              <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"></path></svg>
+            </a>
+          </div>
+        </div>
+      </div>
+      <div class="mt-8 text-center text-gray-500 text-sm">
+        <p data-i18n="copyright">&copy; 2025 Pravah. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+
+  <script src="js/translations.js"></script>
+  <script src="js/language-switcher.js"></script>
+
+  <script>
+
+
+    // --- Animation & Interactivity (Preserved) ---
+    const canvas = document.getElementById('flowing-background');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    function drawFlowingLines() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = 'rgba(59, 130, 246, 0.3)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let i = 0; i < 5; i++) {
+        const x = Math.random() * canvas.width;
+        const y = Math.random() * canvas.height;
+        const length = Math.random() * 100 + 50;
+        const angle = Math.random() * Math.PI * 2;
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + length * Math.cos(angle), y + length * Math.sin(angle));
+      }
+      ctx.stroke();
+    }
+    function animate() {
+      drawFlowingLines();
+      requestAnimationFrame(animate);
+    }
+    animate();
+
+    const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+    const mobileMenu = document.getElementById('mobile-menu');
+    mobileMenuToggle.addEventListener('click', () => {
+      mobileMenu.classList.toggle('hidden');
+    });
+
+    const problemBtn = document.getElementById('problem-btn');
+    const solutionBtn = document.getElementById('solution-btn');
+    const problemState = document.getElementById('problem-state');
+    const solutionState = document.getElementById('solution-state');
+
+    problemBtn.addEventListener('click', () => {
+      problemState.classList.remove('hidden');
+      solutionState.classList.add('hidden');
+      problemBtn.classList.add('bg-red-600', 'text-white');
+      problemBtn.classList.remove('bg-gray-200', 'text-gray-600');
+      solutionBtn.classList.remove('bg-blue-600', 'text-white');
+      solutionBtn.classList.add('bg-gray-200', 'text-gray-600');
+    });
+
+    solutionBtn.addEventListener('click', () => {
+      solutionState.classList.remove('hidden');
+      problemState.classList.add('hidden');
+      solutionBtn.classList.add('bg-blue-600', 'text-white');
+      solutionBtn.classList.remove('bg-gray-200', 'text-gray-600');
+      problemBtn.classList.remove('bg-red-600', 'text-white');
+      problemBtn.classList.add('bg-gray-200', 'text-gray-600');
+    });
+
+    // Default to English
+
+    problemBtn.click();
+  </script>
+</body>
+</html>

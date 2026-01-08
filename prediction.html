@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PRAVAH — Traffic Prediction</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Noto+Sans+Oriya:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --bg: #0b1220;
+            --card: #0f172a;
+            --muted: #94a3b8;
+            --accent: #06d6a0;
+            --accent-2: #3b82f6;
+            --danger: #ef4444;
+            --yellow: #f59e0b;
+        }
+
+        html,
+        body {
+            height: 100%;
+            background: radial-gradient(1200px 400px at 8% 8%, rgba(59, 130, 246, 0.03), transparent), var(--bg);
+            font-family: Inter, ui-sans-serif, system-ui;
+            color: #cbd5e1;
+            margin: 0;
+        }
+
+        body.lang-hi {
+            font-family: 'Noto Sans Devanagari', sans-serif;
+        }
+
+        body.lang-or {
+            font-family: 'Noto Sans Oriya', sans-serif;
+        }
+
+        .topbar {
+            backdrop-filter: blur(6px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .card {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+        }
+
+        .action-btn {
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--accent-2);
+        }
+
+        .lang-select {
+            background-color: rgba(255, 255, 255, 0.05);
+            color: #cbd5e1;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 0.4rem 2rem 0.4rem 0.8rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            outline: none;
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+        }
+
+        .lang-select option {
+            background-color: var(--bg);
+            color: white;
+        }
+
+        .prediction-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-high {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+        }
+
+        .badge-moderate {
+            background: rgba(245, 158, 11, 0.2);
+            color: #fbbf24;
+        }
+
+        .badge-low {
+            background: rgba(6, 214, 160, 0.2);
+            color: #34d399;
+        }
+
+        .confidence-bar {
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        .time-slot {
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+
+        .time-slot:hover,
+        .time-slot.active {
+            background: rgba(59, 130, 246, 0.1);
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.5;
+                transform: scale(1.2);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="topbar px-6 py-3 flex items-center justify-between sticky top-0 z-50">
+        <div class="flex items-center gap-4">
+            <a href="authority_dashboard.html" class="flex items-center gap-3">
+                <div
+                    class="w-10 h-10 rounded-md bg-gradient-to-br from-sky-600 to-indigo-600 flex items-center justify-center shadow">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <path d="M3 12h3l3-8 4 16 3-12 1 6h3" stroke="#fff" stroke-width="1.5" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                </div>
+                <div>
+                    <div class="text-white font-semibold" data-i18n="brand">PRAVAH Traffic Control</div>
+                    <div class="text-xs text-gray-400" data-i18n="sub_brand">AI Prediction System</div>
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="relative">
+                <select id="lang-toggle" class="lang-select">
+                    <option value="en">English</option>
+                    <option value="hi">हिंदी</option>
+                    <option value="or">ଓଡ଼ିଆ</option>
+                </select>
+            </div>
+            <a href="menu.html" class="action-btn" data-i18n="btn_menu">Menu</a>
+            <a href="authority_dashboard.html" class="action-btn" data-i18n="btn_back">Back to Dashboard</a>
+        </div>
+    </div>
+
+    <main class="p-6">
+        <div class="max-w-7xl mx-auto">
+            <!-- Header Section -->
+            <div class="mb-6">
+                <h1 class="text-2xl font-bold text-white mb-2" data-i18n="page_title">Traffic Prediction & Forecasting
+                </h1>
+                <p class="text-gray-400" data-i18n="page_desc">AI-powered traffic analysis and congestion predictions
+                    for the next 24 hours</p>
+            </div>
+
+            <!-- AI Model Status -->
+            <div class="card mb-6">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <div
+                            class="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-white" data-i18n="ai_status">AI Model Status</h3>
+                            <p class="text-sm text-gray-400" data-i18n="ai_desc">Real-time prediction engine active</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-6">
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-green-400">94.7%</div>
+                            <div class="text-xs text-gray-400" data-i18n="accuracy">Accuracy</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-blue-400">247</div>
+                            <div class="text-xs text-gray-400" data-i18n="sensors">Active Sensors</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-purple-400">1.2s</div>
+                            <div class="text-xs text-gray-400" data-i18n="latency">Avg Latency</div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="pulse-dot bg-green-400"></div>
+                            <span class="text-green-400 font-medium" data-i18n="live">LIVE</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Left Column - Time-based Predictions -->
+                <div class="lg:col-span-2 space-y-6">
+                    <!-- Traffic Forecast Chart -->
+                    <div class="card">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-semibold text-white" data-i18n="forecast_title">24-Hour Traffic Forecast
+                            </h3>
+                            <div class="flex gap-2">
+                                <button class="px-3 py-1 text-xs rounded bg-blue-600 text-white"
+                                    data-i18n="btn_today">Today</button>
+                                <button class="px-3 py-1 text-xs rounded bg-gray-700 text-gray-300"
+                                    data-i18n="btn_tomorrow">Tomorrow</button>
+                            </div>
+                        </div>
+                        <div class="h-72">
+                            <canvas id="forecastChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Congestion Prediction by Zone -->
+                    <div class="card">
+                        <h3 class="font-semibold text-white mb-4" data-i18n="zone_title">Zone-wise Congestion Prediction
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="p-4 rounded-lg bg-gray-800/50">
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="font-medium" data-i18n="zone_a">Zone A - NH16</span>
+                                    <span class="prediction-badge badge-high" data-i18n="pred_high">High Risk</span>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-400" data-i18n="peak_time">Peak Time</span>
+                                        <span>09:00 - 10:30</span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-400" data-i18n="expected_delay">Expected Delay</span>
+                                        <span class="text-red-400">+18 min</span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-400" data-i18n="confidence">Confidence</span>
+                                        <span>87%</span>
+                                    </div>
+                                    <div class="confidence-bar">
+                                        <div class="confidence-fill bg-red-500" style="width: 87%"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="p-4 rounded-lg bg-gray-800/50">
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="font-medium" data-i18n="zone_b">Zone B - City Center</span>
+                                    <span class="prediction-badge badge-moderate" data-i18n="pred_mod">Moderate
+                                        Risk</span>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-400" data-i18n="peak_time">Peak Time</span>
+                                        <span>08:30 - 09:45</span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-400" data-i18n="expected_delay">Expected Delay</span>
+                                        <span class="text-yellow-400">+12 min</span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-400" data-i18n="confidence">Confidence</span>
+                                        <span>74%</span>
+                                    </div>
+                                    <div class="confidence-bar">
+                                        <div class="confidence-fill bg-yellow-500" style="width: 74%"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="p-4 rounded-lg bg-gray-800/50">
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="font-medium" data-i18n="zone_c">Zone C - Ring Road</span>
+                                    <span class="prediction-badge badge-low" data-i18n="pred_low">Low Risk</span>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-400" data-i18n="peak_time">Peak Time</span>
+                                        <span>17:30 - 19:00</span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-400" data-i18n="expected_delay">Expected Delay</span>
+                                        <span class="text-green-400">+5 min</span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-400" data-i18n="confidence">Confidence</span>
+                                        <span>92%</span>
+                                    </div>
+                                    <div class="confidence-bar">
+                                        <div class="confidence-fill bg-green-500" style="width: 92%"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="p-4 rounded-lg bg-gray-800/50">
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="font-medium" data-i18n="zone_d">Zone D - Industrial Area</span>
+                                    <span class="prediction-badge badge-moderate" data-i18n="pred_mod">Moderate
+                                        Risk</span>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-400" data-i18n="peak_time">Peak Time</span>
+                                        <span>07:00 - 08:30</span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-400" data-i18n="expected_delay">Expected Delay</span>
+                                        <span class="text-yellow-400">+10 min</span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-400" data-i18n="confidence">Confidence</span>
+                                        <span>81%</span>
+                                    </div>
+                                    <div class="confidence-bar">
+                                        <div class="confidence-fill bg-yellow-500" style="width: 81%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Vehicle Type Distribution Prediction -->
+                    <div class="card">
+                        <h3 class="font-semibold text-white mb-4" data-i18n="vehicle_title">Predicted Vehicle
+                            Distribution</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="h-64">
+                                <canvas id="vehicleChart"></canvas>
+                            </div>
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-3 h-3 rounded-full bg-blue-500"></div>
+                                        <span data-i18n="v_cars">Cars</span>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="font-bold">12,450</div>
+                                        <div class="text-xs text-green-400">+5.2%</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                                        <span data-i18n="v_bikes">Two Wheelers</span>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="font-bold">8,320</div>
+                                        <div class="text-xs text-green-400">+3.1%</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                        <span data-i18n="v_buses">Buses</span>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="font-bold">1,250</div>
+                                        <div class="text-xs text-red-400">-2.4%</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-3 h-3 rounded-full bg-purple-500"></div>
+                                        <span data-i18n="v_trucks">Trucks</span>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="font-bold">2,180</div>
+                                        <div class="text-xs text-green-400">+1.8%</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column - Predictions & Alerts -->
+                <div class="space-y-6">
+                    <!-- Upcoming Congestion Alerts -->
+                    <div class="card">
+                        <h3 class="font-semibold text-white mb-4" data-i18n="alerts_title">Upcoming Congestion Alerts
+                        </h3>
+                        <div class="space-y-3">
+                            <div class="p-3 rounded-lg border border-red-500/30 bg-red-500/10">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-red-400 font-medium" data-i18n="alert_1_loc">MG Road
+                                        Junction</span>
+                                    <span class="text-xs text-gray-400">09:15</span>
+                                </div>
+                                <p class="text-sm text-gray-300" data-i18n="alert_1_desc">Heavy congestion expected due
+                                    to school rush hour</p>
+                                <div class="mt-2 flex items-center gap-2">
+                                    <span class="text-xs text-gray-400" data-i18n="conf">Confidence:</span>
+                                    <span class="text-xs text-red-400">92%</span>
+                                </div>
+                            </div>
+
+                            <div class="p-3 rounded-lg border border-yellow-500/30 bg-yellow-500/10">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-yellow-400 font-medium" data-i18n="alert_2_loc">City Center</span>
+                                    <span class="text-xs text-gray-400">13:30</span>
+                                </div>
+                                <p class="text-sm text-gray-300" data-i18n="alert_2_desc">Moderate traffic due to lunch
+                                    break period</p>
+                                <div class="mt-2 flex items-center gap-2">
+                                    <span class="text-xs text-gray-400" data-i18n="conf">Confidence:</span>
+                                    <span class="text-xs text-yellow-400">78%</span>
+                                </div>
+                            </div>
+
+                            <div class="p-3 rounded-lg border border-yellow-500/30 bg-yellow-500/10">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-yellow-400 font-medium" data-i18n="alert_3_loc">Highway
+                                        Exit</span>
+                                    <span class="text-xs text-gray-400">18:00</span>
+                                </div>
+                                <p class="text-sm text-gray-300" data-i18n="alert_3_desc">Evening rush hour traffic
+                                    expected</p>
+                                <div class="mt-2 flex items-center gap-2">
+                                    <span class="text-xs text-gray-400" data-i18n="conf">Confidence:</span>
+                                    <span class="text-xs text-yellow-400">85%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Time Slot Selector -->
+                    <div class="card">
+                        <h3 class="font-semibold text-white mb-4" data-i18n="time_title">Select Time for Detailed
+                            Prediction</h3>
+                        <div class="grid grid-cols-3 gap-2">
+                            <div class="time-slot active text-center">
+                                <div class="text-sm font-medium">06:00</div>
+                                <div class="text-xs text-gray-400" data-i18n="t_low">Low</div>
+                            </div>
+                            <div class="time-slot text-center">
+                                <div class="text-sm font-medium">09:00</div>
+                                <div class="text-xs text-red-400" data-i18n="t_high">High</div>
+                            </div>
+                            <div class="time-slot text-center">
+                                <div class="text-sm font-medium">12:00</div>
+                                <div class="text-xs text-yellow-400" data-i18n="t_mod">Moderate</div>
+                            </div>
+                            <div class="time-slot text-center">
+                                <div class="text-sm font-medium">15:00</div>
+                                <div class="text-xs text-gray-400" data-i18n="t_low">Low</div>
+                            </div>
+                            <div class="time-slot text-center">
+                                <div class="text-sm font-medium">18:00</div>
+                                <div class="text-xs text-red-400" data-i18n="t_high">High</div>
+                            </div>
+                            <div class="time-slot text-center">
+                                <div class="text-sm font-medium">21:00</div>
+                                <div class="text-xs text-green-400" data-i18n="t_low">Low</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recommended Actions -->
+                    <div class="card">
+                        <h3 class="font-semibold text-white mb-4" data-i18n="actions_title">AI Recommended Actions</h3>
+                        <div class="space-y-3">
+                            <div class="p-3 rounded-lg bg-blue-500/10 border border-blue-500/30">
+                                <div class="flex items-start gap-3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-400 mt-0.5"
+                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                    </svg>
+                                    <div>
+                                        <p class="text-sm" data-i18n="action_1">Extend green signal at MG Road by 15s
+                                            during 09:00-10:00</p>
+                                        <button class="mt-2 px-3 py-1 text-xs rounded bg-blue-600 text-white"
+                                            data-i18n="btn_apply">Apply</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-3 rounded-lg bg-purple-500/10 border border-purple-500/30">
+                                <div class="flex items-start gap-3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-purple-400 mt-0.5"
+                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                                    </svg>
+                                    <div>
+                                        <p class="text-sm" data-i18n="action_2">Activate alternate route via Ring Road
+                                            at 18:00</p>
+                                        <button class="mt-2 px-3 py-1 text-xs rounded bg-purple-600 text-white"
+                                            data-i18n="btn_schedule">Schedule</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-3 rounded-lg bg-green-500/10 border border-green-500/30">
+                                <div class="flex items-start gap-3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-400 mt-0.5"
+                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <div>
+                                        <p class="text-sm" data-i18n="action_3">Deploy traffic officers at City Center
+                                            13:00-14:00</p>
+                                        <button class="mt-2 px-3 py-1 text-xs rounded bg-green-600 text-white"
+                                            data-i18n="btn_notify">Notify</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Prediction Summary -->
+                    <div class="card">
+                        <h3 class="font-semibold text-white mb-4" data-i18n="summary_title">Today's Prediction Summary
+                        </h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="text-center p-3 bg-gray-800/50 rounded-lg">
+                                <div class="text-2xl font-bold text-blue-400">24,200</div>
+                                <div class="text-xs text-gray-400" data-i18n="sum_vehicles">Expected Vehicles</div>
+                            </div>
+                            <div class="text-center p-3 bg-gray-800/50 rounded-lg">
+                                <div class="text-2xl font-bold text-yellow-400">3</div>
+                                <div class="text-xs text-gray-400" data-i18n="sum_hotspots">Predicted Hotspots</div>
+                            </div>
+                            <div class="text-center p-3 bg-gray-800/50 rounded-lg">
+                                <div class="text-2xl font-bold text-green-400">28</div>
+                                <div class="text-xs text-gray-400" data-i18n="sum_commute">Avg Commute (min)</div>
+                            </div>
+                            <div class="text-center p-3 bg-gray-800/50 rounded-lg">
+                                <div class="text-2xl font-bold text-purple-400">94.7%</div>
+                                <div class="text-xs text-gray-400" data-i18n="sum_accuracy">Model Accuracy</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Initialize Charts
+        function initCharts() {
+            // 24-Hour Forecast Chart
+            const forecastCtx = document.getElementById('forecastChart').getContext('2d');
+            new Chart(forecastCtx, {
+                type: 'line',
+                data: {
+                    labels: ['00:00', '03:00', '06:00', '09:00', '12:00', '15:00', '18:00', '21:00', '24:00'],
+                    datasets: [{
+                        label: 'Predicted Congestion',
+                        data: [15, 10, 25, 85, 55, 45, 90, 60, 20],
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#3b82f6'
+                    }, {
+                        label: 'Historical Average',
+                        data: [12, 8, 22, 80, 50, 42, 88, 55, 18],
+                        borderColor: '#94a3b8',
+                        borderDash: [5, 5],
+                        tension: 0.4,
+                        fill: false,
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: { color: '#94a3b8' }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(255,255,255,0.03)' }
+                        },
+                        y: {
+                            ticks: {
+                                color: '#94a3b8',
+                                callback: value => value + '%'
+                            },
+                            grid: { color: 'rgba(255,255,255,0.03)' },
+                            min: 0,
+                            max: 100
+                        }
+                    }
+                }
+            });
+
+            // Vehicle Distribution Chart
+            const vehicleCtx = document.getElementById('vehicleChart').getContext('2d');
+            new Chart(vehicleCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Cars', 'Two Wheelers', 'Buses', 'Trucks'],
+                    datasets: [{
+                        data: [12450, 8320, 1250, 2180],
+                        backgroundColor: ['#3b82f6', '#22c55e', '#eab308', '#a855f7'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    cutout: '65%'
+                }
+            });
+        }
+
+        // Time slot selection
+        document.querySelectorAll('.time-slot').forEach(slot => {
+            slot.addEventListener('click', () => {
+                document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('active'));
+                slot.classList.add('active');
+            });
+        });
+
+        // Translations
+        const translations = {
+            en: {
+                brand: "PRAVAH Traffic Control",
+                sub_brand: "AI Prediction System",
+                btn_menu: "Menu",
+                btn_back: "Back to Dashboard",
+                page_title: "Traffic Prediction & Forecasting",
+                page_desc: "AI-powered traffic analysis and congestion predictions for the next 24 hours",
+                ai_status: "AI Model Status",
+                ai_desc: "Real-time prediction engine active",
+                accuracy: "Accuracy",
+                sensors: "Active Sensors",
+                latency: "Avg Latency",
+                live: "LIVE",
+                forecast_title: "24-Hour Traffic Forecast",
+                btn_today: "Today",
+                btn_tomorrow: "Tomorrow",
+                zone_title: "Zone-wise Congestion Prediction",
+                zone_a: "Zone A - NH16",
+                zone_b: "Zone B - City Center",
+                zone_c: "Zone C - Ring Road",
+                zone_d: "Zone D - Industrial Area",
+                pred_high: "High Risk",
+                pred_mod: "Moderate Risk",
+                pred_low: "Low Risk",
+                peak_time: "Peak Time",
+                expected_delay: "Expected Delay",
+                confidence: "Confidence",
+                vehicle_title: "Predicted Vehicle Distribution",
+                v_cars: "Cars",
+                v_bikes: "Two Wheelers",
+                v_buses: "Buses",
+                v_trucks: "Trucks",
+                alerts_title: "Upcoming Congestion Alerts",
+                alert_1_loc: "MG Road Junction",
+                alert_1_desc: "Heavy congestion expected due to school rush hour",
+                alert_2_loc: "City Center",
+                alert_2_desc: "Moderate traffic due to lunch break period",
+                alert_3_loc: "Highway Exit",
+                alert_3_desc: "Evening rush hour traffic expected",
+                conf: "Confidence:",
+                time_title: "Select Time for Detailed Prediction",
+                t_low: "Low",
+                t_high: "High",
+                t_mod: "Moderate",
+                actions_title: "AI Recommended Actions",
+                action_1: "Extend green signal at MG Road by 15s during 09:00-10:00",
+                action_2: "Activate alternate route via Ring Road at 18:00",
+                action_3: "Deploy traffic officers at City Center 13:00-14:00",
+                btn_apply: "Apply",
+                btn_schedule: "Schedule",
+                btn_notify: "Notify",
+                summary_title: "Today's Prediction Summary",
+                sum_vehicles: "Expected Vehicles",
+                sum_hotspots: "Predicted Hotspots",
+                sum_commute: "Avg Commute (min)",
+                sum_accuracy: "Model Accuracy"
+            },
+            hi: {
+                brand: "प्रवाह यातायात नियंत्रण",
+                sub_brand: "AI पूर्वानुमान प्रणाली",
+                btn_menu: "मेनू",
+                btn_back: "डैशबोर्ड पर वापस",
+                page_title: "यातायात पूर्वानुमान और भविष्यवाणी",
+                page_desc: "अगले 24 घंटों के लिए AI-संचालित यातायात विश्लेषण",
+                ai_status: "AI मॉडल स्थिति",
+                ai_desc: "रीयल-टाइम पूर्वानुमान इंजन सक्रिय",
+                accuracy: "सटीकता",
+                sensors: "सक्रिय सेंसर",
+                latency: "औसत विलंब",
+                live: "लाइव",
+                forecast_title: "24 घंटे का यातायात पूर्वानुमान",
+                btn_today: "आज",
+                btn_tomorrow: "कल",
+                zone_title: "क्षेत्र-वार भीड़भाड़ पूर्वानुमान",
+                zone_a: "क्षेत्र A - NH16",
+                zone_b: "क्षेत्र B - सिटी सेंटर",
+                zone_c: "क्षेत्र C - रिंग रोड",
+                zone_d: "क्षेत्र D - औद्योगिक क्षेत्र",
+                pred_high: "उच्च जोखिम",
+                pred_mod: "मध्यम जोखिम",
+                pred_low: "कम जोखिम",
+                peak_time: "पीक समय",
+                expected_delay: "अपेक्षित विलंब",
+                confidence: "विश्वास",
+                vehicle_title: "अनुमानित वाहन वितरण",
+                v_cars: "कारें",
+                v_bikes: "दोपहिया",
+                v_buses: "बसें",
+                v_trucks: "ट्रक",
+                alerts_title: "आगामी भीड़भाड़ अलर्ट",
+                alert_1_loc: "एमजी रोड जंक्शन",
+                alert_1_desc: "स्कूल रश आवर के कारण भारी भीड़भाड़ अपेक्षित",
+                alert_2_loc: "सिटी सेंटर",
+                alert_2_desc: "लंच ब्रेक के कारण मध्यम यातायात",
+                alert_3_loc: "राजमार्ग निकास",
+                alert_3_desc: "शाम की भीड़ अपेक्षित",
+                conf: "विश्वास:",
+                time_title: "विस्तृत पूर्वानुमान के लिए समय चुनें",
+                t_low: "कम",
+                t_high: "उच्च",
+                t_mod: "मध्यम",
+                actions_title: "AI अनुशंसित कार्रवाई",
+                action_1: "09:00-10:00 के दौरान एमजी रोड पर हरा सिग्नल 15s बढ़ाएं",
+                action_2: "18:00 पर रिंग रोड के माध्यम से वैकल्पिक मार्ग सक्रिय करें",
+                action_3: "सिटी सेंटर में 13:00-14:00 पर यातायात अधिकारी तैनात करें",
+                btn_apply: "लागू करें",
+                btn_schedule: "शेड्यूल करें",
+                btn_notify: "सूचित करें",
+                summary_title: "आज का पूर्वानुमान सारांश",
+                sum_vehicles: "अपेक्षित वाहन",
+                sum_hotspots: "अनुमानित हॉटस्पॉट",
+                sum_commute: "औसत यात्रा (मिनट)",
+                sum_accuracy: "मॉडल सटीकता"
+            },
+            or: {
+                brand: "ପ୍ରବାହ ଟ୍ରାଫିକ୍ ନିୟନ୍ତ୍ରଣ",
+                sub_brand: "AI ପୂର୍ବାନୁମାନ ପ୍ରଣାଳୀ",
+                btn_menu: "ମେନୁ",
+                btn_back: "ଡ୍ୟାସବୋର୍ଡକୁ ଫେରନ୍ତୁ",
+                page_title: "ଟ୍ରାଫିକ୍ ପୂର୍ବାନୁମାନ",
+                page_desc: "ଆଗାମୀ 24 ଘଣ୍ଟା ପାଇଁ AI-ଚାଳିତ ଟ୍ରାଫିକ୍ ବିଶ୍ଳେଷଣ",
+                ai_status: "AI ମଡେଲ୍ ସ୍ଥିତି",
+                ai_desc: "ରିଅଲ୍-ଟାଇମ୍ ପୂର୍ବାନୁମାନ ଇଞ୍ଜିନ୍ ସକ୍ରିୟ",
+                accuracy: "ସଠିକତା",
+                sensors: "ସକ୍ରିୟ ସେନ୍ସର",
+                latency: "ହାରାହାରି ବିଳମ୍ବ",
+                live: "ଲାଇଭ୍",
+                forecast_title: "24 ଘଣ୍ଟା ଟ୍ରାଫିକ୍ ପୂର୍ବାନୁମାନ",
+                btn_today: "ଆଜି",
+                btn_tomorrow: "ଆସନ୍ତାକାଲି",
+                zone_title: "ଜୋନ୍-ଭିତ୍ତିକ ଭିଡ଼ ପୂର୍ବାନୁମାନ",
+                zone_a: "ଜୋନ୍ A - NH16",
+                zone_b: "ଜୋନ୍ B - ସିଟି ସେଣ୍ଟର",
+                zone_c: "ଜୋନ୍ C - ରିଙ୍ଗ ରୋଡ୍",
+                zone_d: "ଜୋନ୍ D - ଶିଳ୍ପ ଅଞ୍ଚଳ",
+                pred_high: "ଉଚ୍ଚ ବିପଦ",
+                pred_mod: "ମଧ୍ୟମ ବିପଦ",
+                pred_low: "କମ୍ ବିପଦ",
+                peak_time: "ପିକ୍ ସମୟ",
+                expected_delay: "ଆଶା ବିଳମ୍ବ",
+                confidence: "ନିଶ୍ଚିତତା",
+                vehicle_title: "ଅନୁମାନିତ ଗାଡ଼ି ବଣ୍ଟନ",
+                v_cars: "କାର୍",
+                v_bikes: "ଦୁଇଚକିଆ",
+                v_buses: "ବସ୍",
+                v_trucks: "ଟ୍ରକ୍",
+                alerts_title: "ଆଗାମୀ ଭିଡ଼ ଆଲର୍ଟ",
+                alert_1_loc: "ଏମ୍.ଜି ରୋଡ୍ ଛକ",
+                alert_1_desc: "ସ୍କୁଲ୍ ରଶ୍ ଆୱାର୍ ପାଇଁ ଭାରୀ ଭିଡ଼ ଆଶା",
+                alert_2_loc: "ସିଟି ସେଣ୍ଟର",
+                alert_2_desc: "ଲଞ୍ଚ ବ୍ରେକ୍ ପାଇଁ ମଧ୍ୟମ ଟ୍ରାଫିକ୍",
+                alert_3_loc: "ରାଜପଥ ପ୍ରସ୍ଥାନ",
+                alert_3_desc: "ସନ୍ଧ୍ୟା ରଶ୍ ଆୱାର୍ ଟ୍ରାଫିକ୍ ଆଶା",
+                conf: "ନିଶ୍ଚିତତା:",
+                time_title: "ବିସ୍ତୃତ ପୂର୍ବାନୁମାନ ପାଇଁ ସମୟ ଚୟନ କରନ୍ତୁ",
+                t_low: "କମ୍",
+                t_high: "ଅଧିକ",
+                t_mod: "ମଧ୍ୟମ",
+                actions_title: "AI ପ୍ରସ୍ତାବିତ କାର୍ଯ୍ୟ",
+                action_1: "09:00-10:00 ରେ ଏମ୍.ଜି ରୋଡ୍‌ରେ ସବୁଜ ସିଗନାଲ୍ 15s ବୃଦ୍ଧି କରନ୍ତୁ",
+                action_2: "18:00 ରେ ରିଙ୍ଗ ରୋଡ୍ ମାଧ୍ୟମରେ ବିକଳ୍ପ ମାର୍ଗ ସକ୍ରିୟ କରନ୍ତୁ",
+                action_3: "ସିଟି ସେଣ୍ଟରରେ 13:00-14:00 ରେ ଟ୍ରାଫିକ୍ ଅଧିକାରୀ ନିୟୋଜନ କରନ୍ତୁ",
+                btn_apply: "ପ୍ରୟୋଗ କରନ୍ତୁ",
+                btn_schedule: "ସିଡ୍ୟୁଲ୍ କରନ୍ତୁ",
+                btn_notify: "ସୂଚନା ଦିଅନ୍ତୁ",
+                summary_title: "ଆଜିର ପୂର୍ବାନୁମାନ ସାରାଂଶ",
+                sum_vehicles: "ଆଶା ଗାଡ଼ି",
+                sum_hotspots: "ଅନୁମାନିତ ହଟସ୍ପଟ୍",
+                sum_commute: "ହାରାହାରି ଯାତ୍ରା (ମିନିଟ୍)",
+                sum_accuracy: "ମଡେଲ୍ ସଠିକତା"
+            }
+        };
+
+        const langToggle = document.getElementById('lang-toggle');
+
+        function updateLanguage(lang) {
+            document.body.classList.remove('lang-hi', 'lang-or');
+            if (lang === 'hi') document.body.classList.add('lang-hi');
+            if (lang === 'or') document.body.classList.add('lang-or');
+
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[lang][key]) {
+                    el.innerText = translations[lang][key];
+                }
+            });
+        }
+
+        langToggle.addEventListener('change', (e) => {
+            localStorage.setItem('language', e.target.value);
+            updateLanguage(e.target.value);
+        });
+
+        const savedLang = localStorage.getItem('language') || 'en';
+        langToggle.value = savedLang;
+        updateLanguage(savedLang);
+
+        // Initialize charts
+        initCharts();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Accident Response Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Noto+Sans+Oriya:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #111827;
+            --card: #1f2937;
+            --border: rgba(255, 255, 255, 0.08);
+            --text-primary: #e5e7eb;
+            --accent-blue: #60a5fa;
+            --accent-green: #4ade80;
+            --accent-yellow: #facc15;
+            --accent-red: #f87171;
+        }
+
+        body {
+            background-color: var(--bg);
+            background-image: radial-gradient(circle at top, #1f2937, var(--bg));
+            font-family: 'Inter', sans-serif;
+            color: var(--text-primary);
+        }
+
+        body.lang-hi {
+            font-family: 'Noto Sans Devanagari', sans-serif;
+        }
+
+        body.lang-or {
+            font-family: 'Noto Sans Oriya', sans-serif;
+        }
+
+        .topbar {
+            backdrop-filter: blur(8px);
+            background-color: rgba(17, 24, 39, 0.7);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card {
+            background-color: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+        }
+
+        input,
+        select {
+            background-color: #374151;
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            border-radius: 0.5rem;
+        }
+
+        #map {
+            height: 500px;
+            border-radius: 0.75rem;
+        }
+
+        .hospital-icon {
+            background-color: #3b82f6;
+            color: white;
+            text-align: center;
+            line-height: 28px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+        }
+
+        .leaflet-marker-icon.accident-pin {
+            background-color: #ef4444;
+            border-radius: 50%;
+            border: 3px solid white;
+            width: 24px !important;
+            height: 24px !important;
+            margin-left: -12px !important;
+            margin-top: -12px !important;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+        }
+
+        .leaflet-routing-container {
+            display: none;
+        }
+
+        .leaflet-marker-icon.leaflet-marker-draggable {
+            display: none !important;
+        }
+
+        .notification-toast {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
+            z-index: 1000;
+            transform: translateX(150%);
+            transition: transform 0.4s ease;
+            font-weight: 600;
+            max-width: 350px;
+        }
+
+        .notification-toast.show {
+            transform: translateX(0);
+        }
+
+        .notification-toast .icon {
+            font-size: 1.5rem;
+            margin-right: 0.5rem;
+        }
+
+        .notify-btn {
+            background: linear-gradient(135deg, #10b981, #059669);
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 700;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        .notify-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+        }
+    </style>
+</head>
+
+<body class="pb-8">
+    <div id="notification-toast" class="notification-toast">
+        <span class="icon">✅</span>
+        <span id="notification-text">Notification sent!</span>
+    </div>
+
+    <header class="topbar sticky top-0 z-10 px-8 py-4 flex justify-between items-center">
+        <h1 id="main-title" class="text-3xl font-extrabold text-red-500 flex items-center">
+            🚨 <span class="ml-2">Intelligent Traffic Incident Response</span>
+        </h1>
+        <div class="flex items-center gap-4">
+            <select id="lang-toggle" class="px-3 py-2">
+                <option value="en">English (EN)</option>
+                <option value="hi">हिन्दी (HI)</option>
+                <option value="or">ଓଡ଼ିଆ (OR)</option>
+            </select>
+        </div>
+    </header>
+
+    <main class="p-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2 space-y-8">
+                <div class="card shadow-2xl">
+                    <h2 id="video-title" class="text-2xl font-semibold mb-4 text-red-400">YOLO Detection Video Feed</h2>
+                    <div class="bg-black border border-red-500 rounded-lg overflow-hidden" style="height: 600px;">
+                        <video id="detected-video" src="accident.mp4" class="w-full h-full object-cover" autoplay loop
+                            muted></video>
+                    </div>
+                </div>
+                <div class="card shadow-2xl">
+                    <h2 id="map-title" class="text-2xl font-semibold mb-4" style="color: var(--accent-blue)">Incident
+                        Location Map</h2>
+                    <div id="map"></div>
+                </div>
+            </div>
+            <div class="lg:col-span-1 flex flex-col space-y-8">
+                <div class="card shadow-2xl flex-grow">
+                    <h2 id="details-title" class="text-2xl font-semibold mb-4" style="color: var(--accent-yellow)">
+                        Incident Details</h2>
+                    <div class="text-lg space-y-4">
+                        <p><strong id="label-id">Incident ID:</strong> <span id="val-id"
+                                class="font-mono text-gray-400"></span></p>
+                        <p><strong id="label-timestamp">Timestamp:</strong> <span id="val-timestamp"
+                                class="text-gray-400"></span></p>
+                        <p><strong id="label-camera">Camera ID:</strong> <span id="val-camera"
+                                class="text-gray-400"></span></p>
+                        <p><strong id="label-location">Location:</strong> <span id="val-location" class="font-bold"
+                                style="color: var(--accent-red)"></span></p>
+                        <p><strong id="label-reason">Reason:</strong> <span id="val-reason"
+                                class="font-extrabold text-xl text-yellow-300"></span></p>
+                        <p><strong id="label-severity">Severity:</strong> <span id="val-severity"
+                                class="font-bold text-red-500"></span></p>
+                    </div>
+                </div>
+                <div class="card shadow-2xl">
+                    <h2 id="dispatch-title" class="text-2xl font-semibold mb-4" style="color: var(--accent-green)">
+                        Emergency Dispatch Status</h2>
+                    <div class="text-lg space-y-4">
+                        <p><strong id="label-status">Status:</strong> <span id="val-status"
+                                class="font-extrabold text-2xl text-green-500"></span></p>
+                        <p><strong id="label-amb">Ambulance ID:</strong> <span id="val-amb"
+                                class="font-mono text-gray-400"></span></p>
+                        <p><strong id="label-eta">ETA:</strong> <span id="val-eta"
+                                class="font-extrabold text-xl text-green-400"></span></p>
+                        <p class="pt-2"><strong id="label-hospital" style="color: var(--accent-blue)">Nearest
+                                Hospital:</strong> <span id="val-hospital" class="font-bold"
+                                style="color: var(--accent-blue)"></span></p>
+                        <button id="send-notification" class="notify-btn">📤 Send Notification</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
+    <script>
+        // =============================================
+        // NEW ACCIDENT DATA - Jaydev Vihar + Capital Hospital
+        // =============================================
+        const ACCIDENT = {
+            id: "INC-" + Date.now(),
+            timestamp: new Date().toLocaleString('en-IN'),
+            camera: "Camera_002",
+            location: "Jaydev Vihar Square, Bhubaneswar",
+            lat: 20.2960,
+            lon: 85.8245,
+            reason: "High speed collision between two vehicles",
+            severity: "High",
+            status: "DISPATCHED",
+            ambulance: "AMB-BBSR-4521",
+            eta: "6 minutes",
+            hospital: "Capital Hospital Emergency",
+            hospitalLat: 20.2932,
+            hospitalLon: 85.8210
+        };
+
+        // =============================================
+        // TRANSLATIONS
+        // =============================================
+        const LANG = {
+            en: {
+                title: "Intelligent Traffic Incident Response",
+                video: "YOLO Detection Video Feed",
+                map: "Incident Location Map",
+                details: "Incident Details",
+                dispatch: "Emergency Dispatch Status",
+                id: "Incident ID:", timestamp: "Timestamp:", camera: "Camera ID:",
+                location: "Location:", reason: "Reason:", severity: "Severity:",
+                status: "Status:", amb: "Ambulance ID:", eta: "ETA:",
+                hospital: "Nearest Hospital:", btn: "📤 Send Notification",
+                notifySent: "Notification sent to"
+            },
+            hi: {
+                title: "इंटेलिजेंट ट्रैफिक घटना प्रतिक्रिया",
+                video: "YOLO डिटेक्शन वीडियो फीड",
+                map: "घटना स्थान मानचित्र",
+                details: "घटना विवरण",
+                dispatch: "आपातकालीन प्रेषण स्थिति",
+                id: "घटना ID:", timestamp: "समय:", camera: "कैमरा ID:",
+                location: "स्थान:", reason: "कारण:", severity: "गंभीरता:",
+                status: "स्थिति:", amb: "एम्बुलेंस ID:", eta: "आगमन समय:",
+                hospital: "निकटतम अस्पताल:", btn: "📤 सूचना भेजें",
+                notifySent: "सूचना भेजी गई"
+            },
+            or: {
+                title: "ବୁଦ୍ଧିମାନ ଟ୍ରାଫିକ୍ ଘଟଣା ପ୍ରତିକ୍ରିୟା",
+                video: "YOLO ଡିଟେକ୍ସନ୍ ଭିଡିଓ ଫିଡ୍",
+                map: "ଘଟଣା ସ୍ଥାନ ମାନଚିତ୍ର",
+                details: "ଘଟଣା ବିବରଣୀ",
+                dispatch: "ଜରୁରୀକାଳୀନ ଡିସପାଚ୍ ସ୍ଥିତି",
+                id: "ଘଟଣା ID:", timestamp: "ସମୟ:", camera: "କ୍ୟାମେରା ID:",
+                location: "ସ୍ଥାନ:", reason: "କାରଣ:", severity: "ଗୁରୁତ୍ୱ:",
+                status: "ସ୍ଥିତି:", amb: "ଆମ୍ବୁଲାନ୍ସ ID:", eta: "ETA:",
+                hospital: "ନିକଟସ୍ଥ ହସ୍ପିଟାଲ୍:", btn: "📤 ସୂଚନା ପଠାନ୍ତୁ",
+                notifySent: "ସୂଚନା ପଠାଗଲା"
+            }
+        };
+
+        let currentLang = 'en';
+
+        // =============================================
+        // MAP SETUP
+        // =============================================
+        const map = L.map('map', {
+            scrollWheelZoom: false, doubleClickZoom: false, boxZoom: false,
+            touchZoom: false, keyboard: false, dragging: false, zoomControl: false
+        }).setView([ACCIDENT.lat, ACCIDENT.lon], 14);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap', maxZoom: 19
+        }).addTo(map);
+
+        const hospitalIcon = L.divIcon({
+            className: 'hospital-icon', html: '<span>+</span>',
+            iconSize: [30, 30], iconAnchor: [15, 30]
+        });
+
+        const accidentIcon = L.divIcon({
+            className: 'accident-pin', iconSize: [24, 24], iconAnchor: [12, 24]
+        });
+
+        L.Routing.control({
+            waypoints: [
+                L.latLng(ACCIDENT.hospitalLat, ACCIDENT.hospitalLon),
+                L.latLng(ACCIDENT.lat, ACCIDENT.lon)
+            ],
+            router: L.Routing.osrmv1({ serviceUrl: 'https://router.project-osrm.org/route/v1' }),
+            lineOptions: { styles: [{ color: '#2563eb', weight: 5, opacity: 0.8 }] },
+            createMarker: function (i, wp) {
+                if (i === 0) return L.marker(wp.latLng, { icon: hospitalIcon }).bindPopup('🏥 ' + ACCIDENT.hospital);
+                return L.marker(wp.latLng, { icon: accidentIcon }).bindPopup('🚨 ' + ACCIDENT.location);
+            },
+            show: false, addWaypoints: false, routeWhileDragging: false, draggableWaypoints: false
+        }).addTo(map);
+
+        // =============================================
+        // NOTIFICATION TOAST
+        // =============================================
+        function showNotification(msg) {
+            const toast = document.getElementById('notification-toast');
+            document.getElementById('notification-text').textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 4000);
+        }
+
+        // =============================================
+        // LANGUAGE HANDLER
+        // =============================================
+        function setLanguage(lang) {
+            currentLang = lang;
+            const t = LANG[lang];
+            document.body.className = 'lang-' + lang + ' pb-8';
+            document.getElementById('main-title').lastChild.textContent = t.title;
+            document.getElementById('video-title').textContent = t.video;
+            document.getElementById('map-title').textContent = t.map;
+            document.getElementById('details-title').textContent = t.details;
+            document.getElementById('dispatch-title').textContent = t.dispatch;
+            document.getElementById('label-id').textContent = t.id;
+            document.getElementById('label-timestamp').textContent = t.timestamp;
+            document.getElementById('label-camera').textContent = t.camera;
+            document.getElementById('label-location').textContent = t.location;
+            document.getElementById('label-reason').textContent = t.reason;
+            document.getElementById('label-severity').textContent = t.severity;
+            document.getElementById('label-status').textContent = t.status;
+            document.getElementById('label-amb').textContent = t.amb;
+            document.getElementById('label-eta').textContent = t.eta;
+            document.getElementById('label-hospital').textContent = t.hospital;
+            document.getElementById('send-notification').textContent = t.btn;
+        }
+
+        // =============================================
+        // PAGE LOAD
+        // =============================================
+        document.addEventListener('DOMContentLoaded', function () {
+            document.getElementById('val-id').textContent = ACCIDENT.id;
+            document.getElementById('val-timestamp').textContent = ACCIDENT.timestamp;
+            document.getElementById('val-camera').textContent = ACCIDENT.camera;
+            document.getElementById('val-location').textContent = ACCIDENT.location;
+            document.getElementById('val-reason').textContent = ACCIDENT.reason;
+            document.getElementById('val-severity').textContent = ACCIDENT.severity;
+            document.getElementById('val-status').textContent = ACCIDENT.status;
+            document.getElementById('val-amb').textContent = ACCIDENT.ambulance;
+            document.getElementById('val-eta').textContent = ACCIDENT.eta;
+            document.getElementById('val-hospital').textContent = ACCIDENT.hospital;
+
+            const langToggle = document.getElementById('lang-toggle');
+            const savedLang = localStorage.getItem('lang') || 'en';
+            langToggle.value = savedLang;
+            setLanguage(savedLang);
+
+            langToggle.addEventListener('change', function (e) {
+                localStorage.setItem('lang', e.target.value);
+                setLanguage(e.target.value);
+            });
+
+            document.getElementById('send-notification').addEventListener('click', function () {
+                const t = LANG[currentLang];
+                showNotification(t.notifySent + ' ' + ACCIDENT.hospital);
+            });
+
+            document.getElementById('detected-video').play().catch(function () { });
+        });
+    </script>
+</body>
+
+</html>

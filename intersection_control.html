@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Live Intersection Control - MG Road Junction</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+Devanagari:wght@400;600;700&family=Noto+Sans+Oriya:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg: #0b1220;
+            --card: #0f172a;
+            --border: rgba(255, 255, 255, 0.05);
+            --muted: #94a3b8;
+            --green-light: #22c55e;
+            --yellow-light: #f59e0b;
+            --red-light: #ef4444;
+        }
+        
+        html { scroll-behavior: smooth; }
+        
+        /* Dynamic Font Loading */
+        body { 
+            background-color: var(--bg); 
+            color: #e2e8f0; 
+            font-family: Inter, ui-sans-serif, system-ui;
+            transition: font-family 0.3s ease;
+        }
+        body.lang-hi { font-family: 'Noto Sans Devanagari', sans-serif; }
+        body.lang-or { font-family: 'Noto Sans Oriya', sans-serif; }
+
+        .card {
+            background-color: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            overflow: hidden; 
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .traffic-light {
+            display: flex; flex-direction: column; gap: 8px;
+            background-color: #2d3748; padding: 10px;
+            border-radius: 8px; border: 1px solid var(--border);
+        }
+        .light {
+            width: 32px; height: 32px; border-radius: 50%;
+            background-color: #4a5568; opacity: 0.3;
+            transition: opacity 0.2s ease-in-out, background-color 0.2s;
+        }
+        .light.red.active { background-color: var(--red-light); opacity: 1; box-shadow: 0 0 15px var(--red-light); }
+        .light.yellow.active { background-color: var(--yellow-light); opacity: 1; box-shadow: 0 0 15px var(--yellow-light); }
+        .light.green.active { background-color: var(--green-light); opacity: 1; box-shadow: 0 0 15px var(--green-light); }
+        
+        .control-btn {
+            background-color: #3b82f6; color: white; padding: 8px 16px; border-radius: 6px; font-weight: 600; transition: background-color 0.2s; cursor: pointer;
+        }
+        .control-btn:hover { background-color: #2563eb; }
+        
+        .priority-btn { background-color: var(--red-light); }
+        .priority-btn:hover { background-color: #dc2626; }
+
+        .emission-btn { background-color: var(--yellow-light); color: #000; }
+        .emission-btn:hover { background-color: #d97706; }
+
+        /* Language Select Style */
+        .lang-select {
+            background-color: #1e293b; 
+            color: #94a3b8;
+            border: 1px solid var(--border);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            outline: none;
+            cursor: pointer;
+        }
+        .lang-select:hover { border-color: #3b82f6; color: white; }
+
+        /* Alert Modal Styles */
+        #alert-modal {
+            backdrop-filter: blur(5px);
+            transition: opacity 0.3s ease;
+        }
+        #alert-modal.hidden {
+            display: none;
+            opacity: 0;
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-6 lg:p-8 relative">
+
+    <div id="alert-modal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-xl shadow-2xl max-w-lg w-full overflow-hidden">
+            <div class="bg-slate-800 p-4 border-b border-slate-700 flex justify-between items-center">
+                <h3 class="font-bold text-lg text-white flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full bg-red-500 animate-pulse"></span>
+                    Broadcasted Notifications
+                </h3>
+                <button onclick="closeAlertModal()" class="text-gray-400 hover:text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="p-6 space-y-4">
+                <a href="vvip_route.html" class="block bg-blue-900/20 border-l-4 border-blue-500 p-3 rounded hover:bg-blue-900/40 transition-colors cursor-pointer group">
+                    <div class="flex justify-between items-start mb-1">
+                        <span class="font-bold text-blue-400 text-sm group-hover:text-blue-300">VVIP CONVOY ROUTE</span>
+                        <span class="text-xs text-gray-500">Rec: 12:30 PM</span>
+                    </div>
+                    <p class="text-sm text-gray-300">CM Convoy scheduled to pass through <strong>Down Lane (Lane 2)</strong> at 14:00.</p>
+                    <span class="text-xs text-blue-500 mt-2 block group-hover:underline">View Route Map &rarr;</span>
+                </a>
+
+                <a href="suspicious_vehicle.html" class="block bg-yellow-900/20 border-l-4 border-yellow-500 p-3 rounded hover:bg-yellow-900/40 transition-colors cursor-pointer group">
+                    <div class="flex justify-between items-start mb-1">
+                        <span class="font-bold text-yellow-400 text-sm group-hover:text-yellow-300">SUSPICIOUS VEHICLE ALERT</span>
+                        <span class="text-xs text-gray-500">Rec: 12:45 PM</span>
+                    </div>
+                    <p class="text-sm text-gray-300">White SUV (KA-05-XX-1234) reported. Keep tracking on <strong>Right Lane (Lane 1)</strong>.</p>
+                    <span class="text-xs text-yellow-500 mt-2 block group-hover:underline">Track Vehicle &rarr;</span>
+                </a>
+
+                <a href="sos2.html" class="block bg-red-900/20 border-l-4 border-red-500 p-3 rounded hover:bg-red-900/40 transition-colors cursor-pointer group">
+                    <div class="flex justify-between items-start mb-1">
+                        <span class="font-bold text-red-400 text-sm group-hover:text-red-300">EMERGENCY PRIORITY</span>
+                        <span class="text-xs text-gray-500">Rec: Just Now</span>
+                    </div>
+                    <p class="text-sm text-gray-300">Ambulance detected approaching from <strong>Up Lane (Lane 4)</strong>. Requesting immediate green signal.</p>
+                    <span class="text-xs text-red-500 mt-2 block group-hover:underline">Manage Incident &rarr;</span>
+                </a>
+            </div>
+
+            <div class="bg-slate-800 p-4 border-t border-slate-700 flex justify-end">
+                <button onclick="closeAlertModal()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded font-medium transition-colors">Close Panel</button>
+            </div>
+        </div>
+    </div>
+
+    <template id="lane-card-template">
+        <div class="card flex flex-col">
+            <div class="w-full h-48 bg-black border-b border-slate-700">
+                <video class="w-full h-full object-cover" autoplay loop muted playsinline>
+                    <source src="car_1.mov" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+
+            <div class="p-4 flex-grow flex flex-col">
+                <h3 class="text-xl font-bold mb-4 lane-title"></h3>
+                
+                <div class="flex items-center justify-between mb-4">
+                    <p class="font-mono text-3xl sm:text-4xl font-bold text-white"><span class="timer">0</span>s</p>
+                    <div class="traffic-light">
+                        <div class="light red"></div> <div class="light yellow"></div> <div class="light green"></div>
+                    </div>
+                </div>
+
+                <div class="mt-auto space-y-2 text-sm border-t border-slate-700 pt-3">
+                    <p class="flex justify-between"><span data-i18n="lbl_waiting">Vehicles Waiting:</span> <strong class="text-base vehicles-waiting">0</strong></p>
+                    <p class="flex justify-between"><span data-i18n="lbl_co2">CO₂ Emissions (Idling):</span> <strong class="text-base co2-emissions">0g</strong></p>
+                    <p class="flex justify-between"><span data-i18n="lbl_passed">Vehicles Passed (Cycle):</span> <strong class="text-base vehicles-passed">0</strong></p>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template id="manual-control-template">
+       <div class="space-y-3">
+           <label class="font-semibold control-label"></label>
+           <input type="number" class="w-full bg-slate-900 border border-slate-700 rounded-md p-2 text-white">
+           <button class="w-full control-btn" data-i18n="btn_set_time">Set Time</button>
+           <button class="w-full control-btn priority-btn" data-i18n="btn_priority">Grant Priority</button>
+       </div>
+    </template>
+    
+    <div class="max-w-7xl mx-auto">
+        <header class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6">
+            <div>
+                <h1 class="text-3xl font-bold text-white" data-i18n="page_title">Live Intersection Control Panel</h1>
+                <p class="text-lg text-gray-400"><span data-i18n="viewing_details">Viewing Details for:</span> <span class="font-semibold text-blue-400" data-i18n="loc_mg">MG Road Junction</span></p>
+            </div>
+            
+            <div class="flex items-center gap-4 mt-2 sm:mt-0">
+                <button onclick="triggerAlert()" class="relative p-2 text-gray-400 hover:text-white transition-colors focus:outline-none" title="Notifications">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                    <span class="absolute top-1 right-1 block h-2.5 w-2.5 rounded-full ring-2 ring-slate-900 bg-red-500 animate-pulse"></span>
+                </button>
+
+                <select id="lang-toggle" class="lang-select">
+                    <option value="en">English</option>
+                    <option value="hi">हिंदी</option>
+                    <option value="or">ଓଡ଼ିଆ</option>
+                </select>
+                <a href="authority_dashboard.html" class="text-sm font-medium text-blue-400 hover:text-blue-300" data-i18n="back_link">&larr; Back to Main Dashboard</a>
+            </div>
+        </header>
+
+        <div id="lane-card-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6"></div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="card lg:col-span-2 p-6">
+                <h3 class="text-xl font-bold mb-4" data-i18n="manual_panel">Manual Intervention Panel</h3>
+                <div id="manual-controls-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
+                
+                </div>
+            
+            <div class="card p-6">
+                 <h3 class="text-xl font-bold mb-4" data-i18n="throughput_title">Intersection Throughput</h3>
+                 <div class="h-64"><canvas id="throughputChart"></canvas></div>
+            </div>
+        </div>
+
+        <div class="card mt-6 p-6">
+            <h4 class="font-bold text-lg mb-2" data-i18n="log_title">Computation Log</h4>
+            <div id="calculation-log" class="h-48 overflow-y-auto font-mono text-xs bg-slate-900/50 p-3 rounded-md border border-slate-700"></div>
+        </div>
+    </div>
+
+    <script>
+        // --- TRANSLATION DATA ---
+        const translations = {
+            en: {
+                page_title: "Live Intersection Control Panel",
+                viewing_details: "Viewing Details for:",
+                loc_mg: "MG Road Junction",
+                back_link: "← Back to Main Dashboard",
+                manual_panel: "Manual Intervention Panel",
+                throughput_title: "Intersection Throughput",
+                log_title: "Computation Log",
+                lbl_waiting: "Vehicles Waiting:",
+                lbl_co2: "CO₂ Emissions (Idling):",
+                lbl_passed: "Vehicles Passed (Cycle):",
+                lane_prefix: "Lane",
+                btn_set_time: "Set Time",
+                btn_priority: "Grant Priority",
+                chart_label: "Vehicles Passed This Cycle",
+                Right: "Right", Down: "Down", Left: "Left", Up: "Up"
+            },
+            hi: {
+                page_title: "लाइव चौराहा नियंत्रण कक्ष",
+                viewing_details: "विवरण देख रहे हैं:",
+                loc_mg: "एमजी रोड जंक्शन",
+                back_link: "← मुख्य डैशबोर्ड पर वापस",
+                manual_panel: "मैनुअल हस्तक्षेप पैनल",
+                throughput_title: "चौराहा थ्रूपुट",
+                log_title: "गणना लॉग",
+                lbl_waiting: "प्रतीक्षारत वाहन:",
+                lbl_co2: "CO₂ उत्सर्जन (निष्क्रिय):",
+                lbl_passed: "वाहन गुजरे (साइकिल):",
+                lane_prefix: "लेन",
+                btn_set_time: "समय सेट करें",
+                btn_priority: "प्राथमिकता दें",
+                chart_label: "इस चक्र में गुजरे वाहन",
+                Right: "दाएं", Down: "नीचे", Left: "बाएं", Up: "ऊपर"
+            },
+            or: {
+                page_title: "ଲାଇଭ୍ ଛକ ନିୟନ୍ତ୍ରଣ ପ୍ୟାନେଲ୍",
+                viewing_details: "ବିବରଣୀ ଦେଖୁଛନ୍ତି:",
+                loc_mg: "ଏମ୍.ଜି ରୋଡ୍ ଛକ",
+                back_link: "← ମୁଖ୍ୟ ଡ୍ୟାସବୋର୍ଡକୁ ଫେରନ୍ତୁ",
+                manual_panel: "ମାନୁଆଲ୍ ହସ୍ତକ୍ଷେପ ପ୍ୟାନେଲ୍",
+                throughput_title: "ଛକ ଗାଡି ଚଳାଚଳ",
+                log_title: "ଗଣନା ଲଗ୍",
+                lbl_waiting: "ଅପେକ୍ଷା କରିଥିବା ଗାଡି:",
+                lbl_co2: "CO₂ ନିର୍ଗମନ (ଅଟକି ରହିବା):",
+                lbl_passed: "ଗାଡି ପାସ୍ ହେଲା (ସାଇକେଲ):",
+                lane_prefix: "ଲେନ୍",
+                btn_set_time: "ସମୟ ସେଟ୍ କରନ୍ତୁ",
+                btn_priority: "ପ୍ରାଥମିକତା ଦିଅନ୍ତୁ",
+                chart_label: "ଏହି ଚକ୍ରରେ ପାସ୍ ହୋଇଥିବା ଗାଡି",
+                Right: "ଡାହାଣ", Down: "ତଳ", Left: "ବାମ", Up: "ଉପର"
+            }
+        };
+
+        // --- 1. CONFIGURATION & CONSTANTS ---
+        const DFLT_YELLOW = 5, DFLT_GREEN = 20;
+        const MIN_GREEN = 10, MAX_GREEN = 60;
+        const NUM_SIGNALS = 4, NUM_LANES_PER_DIR = 2;
+        const DETECTION_TIME = 5;
+        const MAX_VEHICLES_PER_LANE = 20;
+
+        const VEHICLE_PASS_TIMES = { car: 2, bike: 1, rickshaw: 2.25, bus: 2.5, truck: 2.5 };
+        const CO2_EMISSION_RATES = { car: 20/60, bike: 20/60, rickshaw: 20/60, bus: 30/60, truck: 30/60 };
+        
+        const VIDEO_SOURCES = ["car_1.mov", "car_2.mov", "car_3.mov", "car_4.mov"];
+
+        // --- 2. SIMULATION STATE ---
+        let signals = [];
+        let currentGreen = 0, nextGreen = 1;
+        let currentYellow = false;
+        let currentLang = 'en';
+        
+        function generateInitialVehicleCounts() {
+            let totalVehicles = Math.floor(Math.random() * 15) + 5; 
+            let counts = { car: 0, bus: 0, truck: 0, rickshaw: 0, bike: 0 };
+            for (let i = 0; i < totalVehicles; i++) {
+                const vehicleType = Object.keys(VEHICLE_PASS_TIMES)[Math.floor(Math.random() * 5)];
+                counts[vehicleType]++;
+            }
+            return counts;
+        }
+
+        const laneData = [
+            { id: 0, name: "Right", vehicleCounts: generateInitialVehicleCounts(), co2: 150.0, vehiclesPassed: 0, hasPriorityVehicle: false },
+            { id: 1, name: "Down",  vehicleCounts: generateInitialVehicleCounts(), co2: 180.0, vehiclesPassed: 0, hasPriorityVehicle: false },
+            { id: 2, name: "Left",  vehicleCounts: generateInitialVehicleCounts(), co2: 75.0, vehiclesPassed: 0, hasPriorityVehicle: true }, 
+            { id: 3, name: "Up",    vehicleCounts: generateInitialVehicleCounts(), co2: 110.0, vehiclesPassed: 0, hasPriorityVehicle: false },
+        ];
+        
+        const logContainer = document.getElementById('calculation-log');
+        let throughputChart;
+
+        function log(message) {
+            const now = new Date().toLocaleTimeString();
+            logContainer.innerHTML += `<p><span class="text-gray-500">[${now}]</span> ${message}</p>`;
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+        
+        // --- 3. CORE LOGIC ---
+        function calculateGreenTime(laneIndex) {
+            const lane = laneData[laneIndex];
+            
+            if (lane.hasPriorityVehicle) {
+                log(`<span class="text-red-400">PRIORITY OVERRIDE:</span> Emergency vehicle in Lane ${lane.id+1}. Setting fixed green time to 15s.`);
+                return 15;
+            }
+
+            let vehicle_component = Object.entries(lane.vehicleCounts)
+                .reduce((acc, [type, count]) => acc + (count * (VEHICLE_PASS_TIMES[type] || 0)), 0);
+
+            const co2_component = lane.co2 / 200.0;
+            let greenTime = Math.ceil((vehicle_component + co2_component) / NUM_LANES_PER_DIR);
+
+            log(`Calculated Green Time for Lane ${lane.id+1}: <b class="text-green-400">${greenTime}s</b> (Vehicles: ${vehicle_component.toFixed(1)}s, CO₂: ${co2_component.toFixed(1)}s)`);
+
+            const originalTime = greenTime;
+            greenTime = Math.max(MIN_GREEN, Math.min(greenTime, MAX_GREEN));
+            
+            if (greenTime !== originalTime) {
+                log(`Time clamped to <b class="text-yellow-400">${greenTime}s</b> (Min: ${MIN_GREEN}s, Max: ${MAX_GREEN}s)`);
+            }
+            
+            return greenTime;
+        }
+
+        // --- 4. SIMULATION ENGINE ---
+        function initialize() {
+            let totalRedTime = (NUM_SIGNALS - 1) * (DFLT_GREEN + DFLT_YELLOW);
+            for (let i = 0; i < NUM_SIGNALS; i++) {
+                signals.push({ red: totalRedTime, yellow: DFLT_YELLOW, green: DFLT_GREEN, manualOverride: false });
+            }
+            signals[0].red = 0;
+            
+            log("Simulation Initialized.");
+            signals[nextGreen].green = calculateGreenTime(nextGreen);
+
+            generateUIFromTemplates();
+            initializeChart();
+            
+            setInterval(updateSignalCycle, 1000);
+            setInterval(simulateTrafficFlow, 3000);
+
+            // Init Translations
+            document.getElementById('lang-toggle').addEventListener('change', (e) => updateLanguage(e.target.value));
+            updateLanguage('en');
+        }
+
+        function updateSignalCycle() {
+            if (currentYellow) {
+                signals[currentGreen].yellow--;
+                if (signals[currentGreen].yellow <= 0) {
+                    currentYellow = false;
+                    laneData[currentGreen].vehiclesPassed = 0;
+                    let lastGreenTime = signals[currentGreen].green;
+                    let totalTimeForLastSignal = lastGreenTime + DFLT_YELLOW;
+
+                    signals[currentGreen] = { 
+                        red: (NUM_SIGNALS - 1) * totalTimeForLastSignal,
+                        yellow: DFLT_YELLOW, 
+                        green: DFLT_GREEN,
+                        manualOverride: false 
+                    };
+                    
+                    currentGreen = nextGreen;
+                    nextGreen = (currentGreen + 1) % NUM_SIGNALS;
+                    signals[currentGreen].red = 0;
+                    
+                    log(`--- Signal changed. <b class="text-green-400">Lane ${currentGreen+1} is now GREEN.</b> ---`);
+                }
+            } else { 
+                signals[currentGreen].green--;
+                if (signals[currentGreen].green <= 0) {
+                    currentYellow = true;
+                }
+            }
+
+            for (let i = 0; i < NUM_SIGNALS; i++) {
+                if (i !== currentGreen) {
+                    if (signals[i].red > 0) signals[i].red--;
+                    if (i === nextGreen && signals[i].red === DETECTION_TIME) {
+                        if (signals[nextGreen].manualOverride) {
+                            log(`Green time for <b class="text-blue-400">Lane ${nextGreen+1}</b> was manually set to <b class="text-white">${signals[nextGreen].green}s</b>. Skipping dynamic calculation.`);
+                            signals[nextGreen].manualOverride = false; 
+                        } else {
+                            log(`Next signal (Lane ${nextGreen+1}) is ${DETECTION_TIME}s away. Calculating its green time...`);
+                            signals[nextGreen].green = calculateGreenTime(nextGreen);
+                        }
+                    }
+                }
+            }
+            updateUI();
+        }
+        
+        function simulateTrafficFlow() {
+            laneData.forEach((lane, index) => {
+                if (index !== currentGreen) {
+                    const currentTotal = Object.values(lane.vehicleCounts).reduce((a, b) => a + b, 0);
+
+                    if (currentTotal < MAX_VEHICLES_PER_LANE) {
+                        const spaceAvailable = MAX_VEHICLES_PER_LANE - currentTotal;
+                        const newVehicles = Math.min(Math.floor(Math.random() * 4), spaceAvailable);
+
+                        if (newVehicles > 0) {
+                            const vehicleType = Object.keys(VEHICLE_PASS_TIMES)[Math.floor(Math.random() * 5)];
+                            lane.vehicleCounts[vehicleType] += newVehicles;
+                        }
+                    }
+                    
+                    let totalWaiting = Object.values(lane.vehicleCounts).reduce((a, b) => a + b, 0);
+                    let co2Increase = totalWaiting * (CO2_EMISSION_RATES['car']) * 3; 
+                    lane.co2 += co2Increase;
+
+                } else if (!currentYellow) {
+                    let vehiclesToPass = Math.ceil(3 / (VEHICLE_PASS_TIMES['car']));
+                    for (const type in lane.vehicleCounts) {
+                        let passed = Math.min(lane.vehicleCounts[type], vehiclesToPass);
+                        lane.vehicleCounts[type] -= passed;
+                        lane.vehiclesPassed += passed;
+                        vehiclesToPass -= passed;
+                        if(vehiclesToPass <= 0) break;
+                    }
+                }
+            });
+            updateUI();
+        }
+        
+        // --- 4.5. MANUAL CONTROL FUNCTIONS ---
+        function setManualTime(laneId) {
+            const input = document.getElementById(`l${laneId}-time`);
+            let newTime = parseInt(input.value, 10);
+
+            if (isNaN(newTime) || newTime < MIN_GREEN || newTime > MAX_GREEN) {
+                alert(`Please enter a time between ${MIN_GREEN} and ${MAX_GREEN} seconds.`);
+                input.value = signals[laneId].green; 
+                return;
+            }
+
+            signals[laneId].green = newTime;
+            signals[laneId].manualOverride = true; 
+            log(`<span class="text-blue-400">MANUAL SET:</span> Lane ${laneId + 1} green time set to <b class="text-white">${newTime}s</b> for its next cycle.`);
+            
+            if (currentGreen === laneId && !currentYellow) {
+                log(`Applying new time to current green cycle.`);
+            }
+            
+            updateUI();
+        }
+        
+        function grantPriority(laneId) {
+            const input = document.getElementById(`l${laneId}-time`);
+            let priorityTime = parseInt(input.value, 10);
+
+            if (isNaN(priorityTime) || priorityTime < MIN_GREEN || priorityTime > MAX_GREEN) {
+                alert(`Please enter a valid priority time between ${MIN_GREEN} and ${MAX_GREEN} seconds.`);
+                input.value = DFLT_GREEN; 
+                return;
+            }
+            
+            log(`<span class="text-red-400">PRIORITY REQUEST:</span> Granting <b class="text-white">${priorityTime}s</b> green time to Lane ${laneId + 1}.`);
+
+            if (currentGreen === laneId && !currentYellow) {
+                signals[laneId].green = priorityTime;
+                log(`Lane is already green. Extending time.`);
+                updateUI();
+                return;
+            }
+
+            signals[laneId].green = priorityTime;
+            signals[laneId].manualOverride = true; 
+            nextGreen = laneId;
+            
+            if (currentYellow) {
+                if (signals[currentGreen].yellow > 1) {
+                    signals[currentGreen].yellow = 1;
+                    log(`Shortening current yellow light to preempt.`);
+                }
+            } else {
+                 if (signals[currentGreen].green > 1) {
+                    signals[currentGreen].green = 1;
+                    log(`Shortening current green light to preempt.`);
+                }
+            }
+        }
+
+        // --- ALERT POPUP FUNCTIONS ---
+        function triggerAlert() {
+            document.getElementById('alert-modal').classList.remove('hidden');
+        }
+
+        function closeAlertModal() {
+            document.getElementById('alert-modal').classList.add('hidden');
+        }
+
+        // --- 5. UI & DOM MANIPULATION ---
+        function generateUIFromTemplates() {
+            const cardContainer = document.getElementById('lane-card-container');
+            const controlsContainer = document.getElementById('manual-controls-container');
+            const cardTemplate = document.getElementById('lane-card-template');
+            const controlTemplate = document.getElementById('manual-control-template');
+
+            laneData.forEach(lane => {
+                // Create Lane Cards
+                const cardClone = cardTemplate.content.cloneNode(true);
+                cardClone.querySelector('video source').setAttribute('src', VIDEO_SOURCES[lane.id]);
+                cardClone.querySelector('.card').id = `lane-card-${lane.id}`;
+                // Title set dynamically in updateLanguage
+                ['red', 'yellow', 'green'].forEach(c => cardClone.querySelector(`.light.${c}`).id = `light-${lane.id}-${c}`);
+                cardContainer.appendChild(cardClone);
+
+                // Create Manual Control Panels
+                const controlClone = controlTemplate.content.cloneNode(true);
+                const label = controlClone.querySelector('.control-label');
+                label.id = `label-control-${lane.id}`; 
+                label.htmlFor = `l${lane.id}-time`;
+                controlClone.querySelector('input').id = `l${lane.id}-time`;
+                controlClone.querySelector('input').value = MIN_GREEN;
+                
+                const setTimeBtn = controlClone.querySelector('.control-btn');
+                const priorityBtn = controlClone.querySelector('.priority-btn');
+
+                setTimeBtn.addEventListener('click', () => setManualTime(lane.id));
+                priorityBtn.addEventListener('click', () => grantPriority(lane.id));
+
+                controlsContainer.appendChild(controlClone);
+            });
+        }
+
+        function updateUI() {
+            signals.forEach((sig, i) => {
+                const card = document.getElementById(`lane-card-${i}`);
+                if (!card) return;
+
+                const isGreen = (i === currentGreen && !currentYellow);
+                const isYellow = (i === currentGreen && currentYellow);
+                
+                card.querySelector(`#light-${i}-red`).classList.toggle('active', !isGreen && !isYellow);
+                card.querySelector(`#light-${i}-yellow`).classList.toggle('active', isYellow);
+                card.querySelector(`#light-${i}-green`).classList.toggle('active', isGreen);
+                
+                let timerValue = isGreen ? sig.green : (isYellow ? sig.yellow : '---');
+                card.querySelector('.timer').textContent = timerValue;
+
+                const lane = laneData[i];
+                card.querySelector('.vehicles-waiting').textContent = Object.values(lane.vehicleCounts).reduce((a, b) => a + b, 0);
+                card.querySelector('.co2-emissions').textContent = `${lane.co2.toFixed(1)}g`;
+                card.querySelector('.vehicles-passed').textContent = lane.vehiclesPassed;
+            });
+             if (throughputChart) {
+                 throughputChart.data.datasets[0].data = laneData.map(l => l.vehiclesPassed);
+                 throughputChart.update('none');
+             }
+        }
+        
+        function initializeChart() {
+            const ctx = document.getElementById('throughputChart').getContext('2d');
+            throughputChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: [], // Set in updateLanguage
+                    datasets: [{
+                        label: 'Vehicles Passed This Cycle',
+                        data: laneData.map(l => l.vehiclesPassed),
+                        backgroundColor: ['#3b82f6', '#ef4444', '#f59e0b', '#22c55e'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, suggestedMax: 20, title: { display: true, text: 'Vehicle Count', color: '#94a3b8' }, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255, 255, 255, 0.05)' } },
+                        x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255, 255, 255, 0.05)' } }
+                    }
+                }
+            });
+        }
+
+        // --- LANGUAGE LOGIC ---
+        function updateLanguage(lang) {
+            currentLang = lang;
+            const t = translations[lang];
+
+            // Fonts
+            document.body.classList.remove('lang-hi', 'lang-or');
+            if (lang === 'hi') document.body.classList.add('lang-hi');
+            if (lang === 'or') document.body.classList.add('lang-or');
+
+            // Static Text
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (t[key]) el.innerText = t[key];
+            });
+
+            // Dynamic Lane Cards & Control Labels
+            laneData.forEach((lane, i) => {
+                const card = document.getElementById(`lane-card-${i}`);
+                if (card) {
+                    const dirName = t[lane.name] || lane.name;
+                    card.querySelector('.lane-title').textContent = `${t.lane_prefix} ${i + 1} (${dirName})`;
+                }
+                const label = document.getElementById(`label-control-${i}`);
+                if(label) {
+                    label.textContent = `${t.lane_prefix} ${i + 1} Time`;
+                }
+            });
+
+            // Chart
+            if (throughputChart) {
+                throughputChart.data.labels = laneData.map((l, i) => `${t.lane_prefix} ${i + 1} (${t[l.name]})`);
+                throughputChart.data.datasets[0].label = t.chart_label;
+                throughputChart.update();
+            }
+        }
+
+        // --- SOS SYNC LISTENER ---
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'sos_active' && e.newValue === 'true') {
+                 triggerAlert();
+                 playAlertSound();
+            }
+        });
+
+        // Backup polling (every 1s)
+        setInterval(() => {
+            if (localStorage.getItem('sos_active') === 'true') {
+                // Check if we already showed it recently? 
+                // For now, rely on user to dismiss. 
+                // To avoid spamming sound, we could check a 'lastAlerted' flag in session storage
+                const lastAlert = sessionStorage.getItem('last_sos_alert');
+                const sosTime = localStorage.getItem('sos_timestamp');
+                
+                if (!lastAlert || lastAlert < sosTime) {
+                    triggerAlert();
+                    playAlertSound();
+                    sessionStorage.setItem('last_sos_alert', Date.now());
+                }
+            }
+        }, 1000);
+
+        function playAlertSound() {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.frequency.setValueAtTime(440, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.5, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.5);
+        }
+
+        // --- START SIMULATION ---
+        initialize();
+    </script>
+</body>
+</html>

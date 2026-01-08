@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pravah - Complaints</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://unpkg.com/lucide-static/font/lucide.css" rel="stylesheet">
+    <style>
+        /* ---- THEMES (Copied from main page for consistency) ---- */
+        .dark-theme {
+            --bg-from: #141b2d; --bg-to: #1a2338; --header-bg: #1a2338/90;
+            --header-border: #374151; --card-bg: #1a2338; --card-sub-bg: #2d3748/98;
+            --card-border: #4b5563; --text-primary: #e5e7eb; --text-muted: #d1d5db;
+            --accent-green: #06d6a0; --accent-blue: #3b82f6; --highlight-green-600: #16a34a;
+            --highlight-yellow-400: #facc15; --highlight-red-500: #ef4444;
+            --input-bg: #2d3748;
+        }
+        .light-theme {
+            --bg-from: #dbeafe; --bg-to: #a7f3d0; --header-bg: #ffffff/80;
+            --header-border: #e5e7eb; --card-bg: #ffffff; --card-sub-bg: #f1f5f9;
+            --card-border: #e2e8f0; --text-primary: #111827; --text-muted: #64748b;
+            --accent-green: #10b981; --accent-blue: #3b82f6; --highlight-green-600: #16a34a;
+            --highlight-yellow-400: #facc15; --highlight-red-500: #ef4444;
+            --input-bg: #f9fafb;
+        }
+        body { background: linear-gradient(to bottom right, var(--bg-from), var(--bg-to)); color: var(--text-primary); }
+        header { background: var(--header-bg); border-bottom-color: var(--header-border); }
+        .card { background: var(--card-bg); border-color: var(--card-border); }
+        .card-sub { background: var(--card-sub-bg); border-color: var(--card-border); }
+        .text-muted { color: var(--text-muted); }
+        .text-accent-blue { color: var(--accent-blue); }
+        .text-highlight-green-600 { color: var(--highlight-green-600); }
+        .text-highlight-yellow-400 { color: var(--highlight-yellow-400); }
+        .text-highlight-red-500 { color: var(--highlight-red-500); }
+        input, textarea { color: var(--text-primary); background-color: var(--input-bg); border-color: var(--card-border); }
+        .theme-switch{position:relative;width:60px;height:34px;border-radius:50px;border:2px solid var(--card-border);overflow:hidden;cursor:pointer;background:linear-gradient(to top,#87ceeb,#b3e5fc);transition:background .6s ease-in-out;display:flex;align-items:center;justify-content:center}.theme-switch .sky{position:relative;width:100%;height:100%}.sun{position:absolute;top:4px;left:6px;width:22px;height:22px;background:radial-gradient(circle at 30% 30%,#fff59d,#FFD93B);border-radius:50%;box-shadow:0 0 8px #FFD93B,0 0 15px #FFD93B;transition:all .8s cubic-bezier(.4,0,.2,1)}.moon{position:absolute;top:4px;right:-30px;width:22px;height:22px;background:radial-gradient(circle at 30% 30%,#e0e0e0,#bdbdbd);border-radius:50%;box-shadow:inset -4px -4px 8px rgba(0,0,0,.3);transition:all .8s cubic-bezier(.4,0,.2,1)}.moon::before,.moon::after{content:"";position:absolute;background:rgba(0,0,0,.15);border-radius:50%}.moon::before{width:5px;height:5px;top:4px;left:5px}.moon::after{width:3px;height:3px;bottom:5px;right:4px}.theme-switch.dark-theme{background:linear-gradient(to top,#0b1220,#1a237e)}.theme-switch.dark-theme .sun{left:-30px;opacity:0}.theme-switch.dark-theme .moon{right:6px;opacity:1}
+        .tab-button.active { background: var(--accent-blue); color: #fff; }
+        .complaint-type-btn.selected { border-color: var(--accent-blue); box-shadow: 0 0 0 2px var(--accent-blue); }
+    </style>
+</head>
+<body class="min-h-screen font-sans">
+    <header class="backdrop-blur shadow border-b sticky top-0 z-10">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-6">
+                <a href="authority_dashboard.html" class="flex items-center space-x-3 group">
+                    <div class="w-10 h-10 bg-gradient-to-r from-[var(--accent-blue)] to-[var(--accent-green)] rounded-full flex items-center justify-center">
+                         <i class="lucide-car text-[#ffffff]"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold">Pravah Complaints</h1>
+                        <p class="text-sm text-muted group-hover:text-accent-blue transition-colors">Back to Dashboard</p>
+                    </div>
+                </a>
+            </div>
+            <div class="flex items-center space-x-6">
+                <div id="theme-toggle" class="theme-switch">
+                    <div class="sky"><div class="sun"></div><div class="moon"></div></div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6 py-8">
+        <!-- Tabs -->
+        <div class="mb-6 flex space-x-2 p-1 card-sub rounded-lg border border-[var(--card-border)] max-w-md mx-auto">
+            <button id="tab-new" class="tab-button flex-1 p-2 rounded-md text-sm font-semibold transition-colors">File a New Complaint</button>
+            <button id="tab-history" class="tab-button flex-1 p-2 rounded-md text-sm font-semibold transition-colors text-muted">My Complaints</button>
+        </div>
+
+        <!-- Tab Content -->
+        <div id="content-new">
+            <div class="card max-w-2xl mx-auto rounded-lg shadow-lg p-6 md:p-8 border border-[var(--card-border)]">
+                <form id="complaint-form" class="space-y-6">
+                    <div>
+                        <label class="text-sm font-semibold mb-2 block">Type of Incident</label>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
+                            <button type="button" class="complaint-type-btn p-3 card-sub rounded-lg border-2 border-transparent transition" data-type="Accident">
+                                <i class="lucide-car-crash text-highlight-red-500 text-3xl mx-auto"></i><span class="text-xs mt-1 block">Accident</span>
+                            </button>
+                            <button type="button" class="complaint-type-btn p-3 card-sub rounded-lg border-2 border-transparent transition" data-type="Roadblock">
+                                <i class="lucide-cone text-highlight-yellow-400 text-3xl mx-auto"></i><span class="text-xs mt-1 block">Roadblock</span>
+                            </button>
+                             <button type="button" class="complaint-type-btn p-3 card-sub rounded-lg border-2 border-transparent transition" data-type="Traffic Jam">
+                                <i class="lucide-timer-off text-accent-blue text-3xl mx-auto"></i><span class="text-xs mt-1 block">Traffic Jam</span>
+                            </button>
+                            <button type="button" class="complaint-type-btn p-3 card-sub rounded-lg border-2 border-transparent transition" data-type="Other">
+                                <i class="lucide-alert-circle text-muted text-3xl mx-auto"></i><span class="text-xs mt-1 block">Other</span>
+                            </button>
+                        </div>
+                         <input type="hidden" id="complaint-type" name="complaint-type" required>
+                    </div>
+
+                    <div class="relative">
+                        <label for="location" class="text-sm font-semibold mb-2 block">Location</label>
+                        <input type="text" id="location" name="location" class="w-full p-2 rounded border text-sm" placeholder="e.g., Near Pari Chowk, Greater Noida" required>
+                        <button type="button" id="get-location" class="absolute right-2 bottom-1.5 text-xs text-accent-blue hover:underline">Use Current Location</button>
+                    </div>
+
+                    <div>
+                        <label for="time" class="text-sm font-semibold mb-2 block">Date & Time of Incident</label>
+                        <input type="datetime-local" id="time" name="time" class="w-full p-2 rounded border text-sm" required>
+                    </div>
+                    
+                    <div>
+                        <label for="traffic" class="text-sm font-semibold mb-2 block">Traffic Level: <span id="traffic-label" class="font-bold text-accent-blue">Moderate</span></label>
+                        <input type="range" id="traffic" name="traffic" min="1" max="5" value="3" class="w-full h-2 bg-[var(--card-sub-bg)] rounded-lg appearance-none cursor-pointer">
+                    </div>
+
+                    <div>
+                        <label for="description" class="text-sm font-semibold mb-2 block">Description</label>
+                        <textarea id="description" name="description" rows="4" class="w-full p-2 rounded border text-sm" placeholder="Provide a brief description of the incident..."></textarea>
+                    </div>
+
+                    <div class="pt-2">
+                        <button type="submit" class="w-full bg-gradient-to-r from-[var(--accent-blue)] to-[var(--accent-green)] text-white font-bold py-3 px-4 rounded-lg shadow-lg hover:opacity-90 transition-opacity flex items-center justify-center space-x-2">
+                            <i class="lucide-send"></i>
+                            <span>Submit Complaint</span>
+                        </button>
+                    </div>
+                     <div id="form-message" class="text-center text-sm mt-4"></div>
+                </form>
+            </div>
+        </div>
+
+        <div id="content-history" class="hidden">
+            <div id="complaints-list" class="space-y-4 max-w-3xl mx-auto">
+                <!-- Complaints will be dynamically inserted here -->
+            </div>
+        </div>
+    </main>
+
+    <script>
+    // --- Theme Logic (from main page) ---
+    const themeToggle = document.getElementById('theme-toggle');
+    const body = document.body;
+    if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        body.classList.add('dark-theme');
+        themeToggle.classList.add('dark-theme');
+    } else {
+        body.classList.add('light-theme');
+    }
+    themeToggle.addEventListener('click', () => {
+        body.classList.toggle('dark-theme');
+        body.classList.toggle('light-theme');
+        themeToggle.classList.toggle('dark-theme');
+        localStorage.setItem('theme', body.classList.contains('dark-theme') ? 'dark' : 'light');
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // --- Mock data for demonstration ---
+        // In a real app, this would come from localStorage or an API
+        let complaintsData = [
+            { id: 'C7A3B', type: 'Accident', location: 'Greater Noida Expressway', date: '2025-09-26T18:30', status: 'Resolved', description: 'Minor collision between two cars near the Advant building. Caused a significant slowdown for about 45 minutes.' },
+            { id: 'D4E8F', type: 'Traffic Jam', location: 'Pari Chowk', date: '2025-09-27T09:15', status: 'In Review', description: 'Unusually heavy traffic this morning. Seems to be caused by a broken down bus in the middle of the roundabout.'},
+            { id: 'G1H5I', type: 'Roadblock', location: 'Near Jagat Farm Market', date: '2025-09-25T14:00', status: 'Pending', description: 'A tree fell across the road during the recent storm. Only one lane is currently passable.'},
+        ];
+
+        // --- DOM Elements ---
+        const tabNew = document.getElementById('tab-new');
+        const tabHistory = document.getElementById('tab-history');
+        const contentNew = document.getElementById('content-new');
+        const contentHistory = document.getElementById('content-history');
+        const complaintForm = document.getElementById('complaint-form');
+        const complaintTypeButtons = document.querySelectorAll('.complaint-type-btn');
+        const hiddenComplaintTypeInput = document.getElementById('complaint-type');
+        const trafficSlider = document.getElementById('traffic');
+        const trafficLabel = document.getElementById('traffic-label');
+        const formMessage = document.getElementById('form-message');
+
+        // --- Tab Switching Logic ---
+        function setActiveTab(activeTab) {
+            if (activeTab === 'new') {
+                tabNew.classList.add('active');
+                tabHistory.classList.remove('active');
+                tabHistory.classList.add('text-muted');
+                contentNew.classList.remove('hidden');
+                contentHistory.classList.add('hidden');
+            } else {
+                tabHistory.classList.add('active');
+                tabNew.classList.remove('active');
+                tabNew.classList.add('text-muted');
+                contentHistory.classList.remove('hidden');
+                contentNew.classList.add('hidden');
+            }
+        }
+        
+        tabNew.addEventListener('click', () => setActiveTab('new'));
+        tabHistory.addEventListener('click', () => setActiveTab('history'));
+        
+        // --- Complaint Form Logic ---
+        complaintTypeButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                complaintTypeButtons.forEach(btn => btn.classList.remove('selected'));
+                button.classList.add('selected');
+                hiddenComplaintTypeInput.value = button.dataset.type;
+            });
+        });
+        
+        const trafficLevels = {1: 'Very Low', 2: 'Low', 3: 'Moderate', 4: 'High', 5: 'Severe'};
+        trafficSlider.addEventListener('input', () => {
+             trafficLabel.textContent = trafficLevels[trafficSlider.value];
+        });
+
+        document.getElementById('get-location').addEventListener('click', () => {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    document.getElementById('location').value = `Near current location (lat: ${position.coords.latitude.toFixed(4)}, lon: ${position.coords.longitude.toFixed(4)})`;
+                }, () => {
+                    console.log("Geolocation permission denied.");
+                    document.getElementById('location').placeholder = "Could not get location. Please enter manually.";
+                });
+            }
+        });
+
+        complaintForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            formMessage.textContent = ''; // Clear previous messages
+
+            // --- Form Validation ---
+            if (!hiddenComplaintTypeInput.value || !document.getElementById('location').value || !document.getElementById('time').value) {
+                formMessage.textContent = 'Please fill out all required fields.';
+                formMessage.style.color = 'var(--highlight-red-500)';
+                return;
+            }
+
+            formMessage.textContent = 'Submitting...';
+            formMessage.style.color = 'var(--accent-blue)';
+
+            // --- Create New Complaint Object from Form Data ---
+            const newComplaint = {
+                id: Math.random().toString(36).substring(2, 7).toUpperCase(),
+                type: hiddenComplaintTypeInput.value,
+                location: document.getElementById('location').value,
+                date: document.getElementById('time').value,
+                status: 'In Review',
+                description: document.getElementById('description').value || 'No description provided.'
+            };
+            
+            // Simulate API call delay
+            setTimeout(() => {
+                // --- Add to data and re-render ---
+                complaintsData.unshift(newComplaint);
+                renderComplaints();
+
+                // --- Provide feedback and reset form ---
+                formMessage.textContent = 'Complaint submitted successfully!';
+                formMessage.style.color = 'var(--highlight-green-600)';
+                
+                complaintForm.reset();
+                complaintTypeButtons.forEach(btn => btn.classList.remove('selected'));
+                trafficLabel.textContent = 'Moderate';
+                
+                // --- Switch to history tab to show the new complaint ---
+                setActiveTab('history');
+
+                // Clear success message after a few seconds
+                setTimeout(() => {
+                    formMessage.textContent = '';
+                }, 3000);
+
+            }, 1000);
+        });
+
+        // --- Complaint History Rendering Logic ---
+        function renderComplaints() {
+            const listContainer = document.getElementById('complaints-list');
+            listContainer.innerHTML = ''; // Clear existing
+            
+            if (complaintsData.length === 0) {
+                 listContainer.innerHTML = `<div class="card p-8 text-center text-muted border border-dashed border-[var(--card-border)] rounded-lg">
+                    <i class="lucide-file-check-2 text-4xl mx-auto mb-2"></i>
+                    <p class="font-semibold">All clear!</p>
+                    <p class="text-sm">You haven't filed any complaints yet.</p>
+                </div>`;
+                return;
+            }
+
+            complaintsData.forEach(complaint => {
+                const iconMap = {
+                    'Accident': '<i class="lucide-car-crash text-highlight-red-500"></i>',
+                    'Roadblock': '<i class="lucide-cone text-highlight-yellow-400"></i>',
+                    'Traffic Jam': '<i class="lucide-timer-off text-accent-blue"></i>',
+                    'Other': '<i class="lucide-alert-circle text-muted"></i>',
+                };
+                 const statusMap = {
+                    'Resolved': 'bg-green-500/10 text-green-500 border-green-500/20',
+                    'In Review': 'bg-blue-500/10 text-blue-500 border-blue-500/20',
+                    'Pending': 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
+                };
+
+                const formattedDate = new Date(complaint.date).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
+
+                const complaintCard = `
+                    <div class="card rounded-lg p-4 border border-[var(--card-border)] flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-4">
+                        <div class="flex-shrink-0 w-12 h-12 rounded-lg card-sub flex items-center justify-center text-2xl">${iconMap[complaint.type]}</div>
+                        <div class="flex-1">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="font-bold">${complaint.type} <span class="text-muted font-normal text-sm">- #${complaint.id}</span></h3>
+                                    <p class="text-sm text-muted flex items-center space-x-2 mt-1">
+                                        <i class="lucide-map-pin w-3 h-3"></i><span>${complaint.location}</span>
+                                    </p>
+                                </div>
+                                <div class="text-xs font-bold px-2 py-1 rounded-full border ${statusMap[complaint.status]}">${complaint.status}</div>
+                            </div>
+                            <div class="mt-2 text-sm card-sub p-3 rounded-md border border-[var(--card-border)]">
+                                <p class="text-muted">${complaint.description}</p>
+                                <p class="text-xs text-right mt-2 font-medium">${formattedDate}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                listContainer.innerHTML += complaintCard;
+            });
+        }
+        
+        // --- Initial Setup ---
+        setActiveTab('new');
+        renderComplaints();
+    });
+    </script>
+</body>
+</html>
+

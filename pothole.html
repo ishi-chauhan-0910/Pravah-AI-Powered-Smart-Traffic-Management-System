@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suspicious Activity Monitor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --border: rgba(255, 255, 255, 0.08);
+            --text-primary: #f1f5f9;
+        }
+
+        body {
+            background-color: var(--bg);
+            font-family: 'Inter', sans-serif;
+            color: var(--text-primary);
+        }
+
+        .topbar {
+            backdrop-filter: blur(8px);
+            background-color: rgba(15, 23, 42, 0.8);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card {
+            background-color: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+        }
+
+        .full-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            background: black;
+        }
+
+        .btn-police { background-color: #3b82f6; color: white; }
+        .btn-police:hover { background-color: #2563eb; }
+        .btn-success { background-color: #22c55e !important; }
+    </style>
+</head>
+
+<body class="h-screen flex flex-col overflow-hidden">
+
+    <!-- Top Bar -->
+    <header class="topbar px-6 py-4 flex justify-between items-center">
+        <h1 class="text-xl font-bold">POTHOLE DETECTION</h1>
+        <p id="clock" class="font-mono text-gray-300 text-sm"></p>
+    </header>
+
+    <main class="flex-1 p-6 grid grid-cols-1 lg:grid-cols-3 gap-6 overflow-hidden">
+
+        <!-- Left Full Video Area -->
+        <div class="lg:col-span-2 h-full">
+            <div class="card h-full p-0 overflow-hidden relative bg-black">
+
+                <div class="absolute top-4 left-4 z-10 flex gap-2">
+                    <span class="bg-black/60 px-2 py-1 rounded text-xs font-mono text-red-400 border border-red-500/30">CAM-04-NORTH</span>
+                    <span class="bg-black/60 px-2 py-1 rounded text-xs font-mono text-white border border-white/10">REC ●</span>
+                </div>
+
+                <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-48 border-2 border-orange-500 opacity-60">
+                    <div class="absolute -top-6 left-0 bg-orange-500 text-black text-xs font-bold px-1">
+                        
+                    </div>
+                </div>
+
+                <!-- FULL pothole video -->
+                <video class="full-video" autoplay loop muted playsinline>
+                    <source src="pothole.mp4" type="video/mp4">
+                </video>
+            </div>
+        </div>
+
+        <!-- Right Side Panel -->
+        <div class="card flex flex-col gap-5 h-full overflow-y-auto">
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-gray-800 p-3 rounded border border-gray-700">
+                    <p class="text-xs text-gray-400 mb-1">Activity Type</p>
+                    <p class="text-lg font-bold text-orange-400">Pothole Detected</p>
+                </div>
+                <div class="bg-gray-800 p-3 rounded border border-gray-700">
+                    <p class="text-xs text-gray-400 mb-1">Pothole Count</p>
+                    <p class="text-lg font-bold text-white">(>=10)</p>
+                </div>
+            </div>
+
+            <div class="space-y-3 border-t border-gray-700 pt-4">
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-400">Location:</span>
+                    <span class="text-sm text-white">Bagalpur</span>
+                </div>
+
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-400">Time Detected:</span>
+                    <span class="text-sm text-white font-mono" id="detect-time"></span>
+                </div>
+
+                
+            </div>
+
+            <div class="border-t border-gray-700 pt-4">
+                <p class="text-xs text-gray-400 mb-1">Nearest RTO Office</p>
+                <div class="flex items-center gap-2 text-blue-400 font-bold">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
+                        </path>
+                    </svg>
+                    Sector 4 
+                </div>
+            </div>
+
+            <button id="alertBtn" class="action-btn btn-police py-3 rounded text-white font-semibold">
+                ALERT RTO
+            </button>
+
+            <!-- NOTES REMOVED COMPLETELY -->
+
+        </div>
+    </main>
+
+    <script>
+        // Update real-time clock and detect-time
+        function updateClock() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString();
+
+            document.getElementById('clock').innerText = timeStr;
+            document.getElementById('detect-time').innerText = timeStr;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // Alert button function
+        document.getElementById('alertBtn').addEventListener('click', function () {
+            this.innerText = "Alert Sent to RTO Office ✓";
+            this.classList.remove("btn-police");
+            this.classList.add("btn-success");
+            this.disabled = true;
+        });
+    </script>
+
+</body>
+</html>

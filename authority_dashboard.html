@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>PRAVAH Traffic Control — Dashboard</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Noto+Sans+Oriya:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+      :root {
+        --bg: #0b1220;
+        --card: #0f1720;
+        --muted: #94a3b8;
+        --accent: #06d6a0;
+        --accent-2: #3b82f6;
+        --danger: #ef4444;
+        --yellow: #f59e0b;
+        --glass: rgba(255, 255, 255, 0.03);
+      }
+      
+      html, body {
+        height: 100%;
+        background: radial-gradient(
+            1200px 400px at 8% 8%,
+            rgba(59, 130, 246, 0.03),
+            transparent
+          ),
+          var(--bg);
+        font-family: Inter, ui-sans-serif, system-ui;
+        color: #cbd5e1;
+        margin: 0;
+      }
+      
+      body.lang-hi { font-family: 'Noto Sans Devanagari', sans-serif; }
+      body.lang-or { font-family: 'Noto Sans Oriya', sans-serif; }
+
+      /* --- COMPACT TOPBAR STYLES --- */
+      .topbar {
+        backdrop-filter: blur(6px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        height: 60px; /* Fixed height for consistency */
+      }
+      .metric-card {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.012), rgba(255, 255, 255, 0.01));
+        border: 1px solid rgba(255, 255, 255, 0.03);
+        padding: 0.25rem 0.5rem; /* Reduced padding */
+        border-radius: 0.4rem;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+      }
+      .metric-label {
+        font-size: 0.7rem; /* Smaller label */
+        color: var(--muted);
+        white-space: nowrap;
+      }
+      .metric-value {
+        font-size: 0.85rem; /* Smaller value */
+        font-weight: 600;
+      }
+
+      /* Language Selector - Compact */
+      .lang-container {
+        position: relative;
+        display: flex;
+        align-items: center;
+        background: rgba(15, 23, 42, 0.6);
+        border: 1px solid var(--accent-2);
+        border-radius: 0.4rem;
+        padding: 0 0.3rem;
+        height: 28px; /* Fixed small height */
+        box-shadow: 0 0 8px rgba(59, 130, 246, 0.15);
+      }
+      .lang-select {
+        background: transparent;
+        color: white;
+        border: none;
+        font-size: 0.75rem; /* Smaller text */
+        font-weight: 600;
+        padding: 0 1.2rem 0 0.3rem;
+        appearance: none;
+        cursor: pointer;
+        outline: none;
+        height: 100%;
+      }
+      .lang-select option {
+        background-color: var(--bg);
+        color: white;
+        padding: 8px;
+      }
+      .lang-arrow {
+        position: absolute;
+        right: 0.3rem;
+        pointer-events: none;
+        color: var(--accent-2);
+        width: 8px;
+      }
+
+      /* Compact Action Button */
+      .action-btn {
+        background: linear-gradient(90deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
+        border: 1px solid rgba(255, 255, 255, 0.04);
+        padding: 0.3rem 0.6rem;
+        border-radius: 0.4rem;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 0.75rem; /* Smaller text */
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+      }
+
+      /* General UI */
+      .muted { color: var(--muted); }
+      .card {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
+        border: 1px solid rgba(255, 255, 255, 0.03);
+        padding: 1rem;
+        border-radius: 0.75rem;
+      }
+      
+      /* New Highlight Class for Interventions */
+      .card-highlight {
+        background: linear-gradient(180deg, rgba(59, 130, 246, 0.08), rgba(15, 23, 42, 0.6));
+        border: 1px solid rgba(59, 130, 246, 0.4);
+        box-shadow: 0 0 15px rgba(59, 130, 246, 0.1);
+        position: relative;
+        overflow: hidden;
+      }
+      .card-highlight::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: #3b82f6;
+      }
+
+      .chip {
+        padding: 0.28rem 0.6rem;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        border: 1px solid rgba(255, 255, 255, 0.03);
+      }
+      .small-muted { font-size: 0.78rem; color: var(--muted); }
+
+      /* Layout */
+      .main-grid {
+        display: grid;
+        /* 50% - 50% Split */
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        height: calc(100vh - 60px); 
+        padding: 18px;
+        box-sizing: border-box;
+      }
+      .col-scroll { overflow-y: auto; padding-right: 8px; }
+      
+      /* Map */
+      .map-card { display: flex; flex-direction: column; height: 100%; }
+      /* REDUCED MAP HEIGHT */
+      #map { height: 360px; border-radius: 0.6rem; border: 1px solid rgba(255, 255, 255, 0.03); }
+      
+      /* Map Markers */
+      .hotspot-marker { width: 18px; height: 18px; border-radius: 50%; border: 3px solid rgba(0, 0, 0, 0.25); display: inline-block; }
+      .hot-red { background: linear-gradient(180deg, #ff8a8a, #ef4444); box-shadow: 0 0 20px rgba(239, 68, 68, 0.2); }
+      .hot-amber { background: linear-gradient(180deg, #ffdf9e, #f59e0b); box-shadow: 0 0 20px rgba(245, 158, 11, 0.14); }
+      .hot-green { background: linear-gradient(180deg, #9ff7d6, #06d6a0); box-shadow: 0 0 20px rgba(6, 214, 160, 0.14); }
+      .hot-blue { background: linear-gradient(180deg, #93c5fd, #3b82f6); box-shadow: 0 0 20px rgba(59, 130, 246, 0.12); }
+      .pulse { animation: pulse 1600ms infinite ease-in-out; }
+      @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.18); opacity: 0.6; } 100% { transform: scale(1); opacity: 1; } }
+
+      /* Responsive */
+      @media (max-width: 1200px) {
+        .main-grid { grid-template-columns: 1fr; grid-auto-rows: auto; height: auto; padding: 12px; }
+        .col-scroll { max-height: none; overflow: visible; }
+        #map { height: 360px; }
+      }
+      .col-scroll::-webkit-scrollbar { width: 10px; }
+      .col-scroll::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.04); border-radius: 6px; }
+      /* Notification Modal Styles */
+      #notif-modal {
+          backdrop-filter: blur(5px);
+          transition: opacity 0.2s ease, visibility 0.2s;
+      }
+      #notif-modal.hidden {
+          opacity: 0;
+          pointer-events: none;
+          visibility: hidden;
+      }
+      .tab-btn {
+          padding: 0.5rem 1rem;
+          color: var(--muted);
+          border-bottom: 2px solid transparent;
+          cursor: pointer;
+          transition: all 0.2s;
+          font-weight: 500;
+          font-size: 0.875rem;
+          white-space: nowrap;
+      }
+      .tab-btn:hover { color: white; }
+      .tab-btn.active {
+          color: var(--accent-2);
+          border-bottom-color: var(--accent-2);
+      }
+      .notif-item {
+          padding: 1rem;
+          border-bottom: 1px solid rgba(255,255,255,0.05);
+          transition: background 0.2s;
+      }
+      .notif-item:hover { background: rgba(255,255,255,0.02); }
+      .notif-sos { border-left: 3px solid var(--danger); background: rgba(239, 68, 68, 0.1); }
+    </style>
+  </head>
+  <body>
+    <div id="notif-modal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-start justify-start p-4 sm:p-6">
+        <div class="bg-slate-900 border border-slate-700 rounded-xl shadow-2xl w-full max-w-md mt-12 ml-4 lg:ml-20 overflow-hidden flex flex-col max-h-[80vh]">
+            <div class="bg-slate-800 p-4 border-b border-slate-700 flex justify-between items-center">
+                <h3 class="font-bold text-white">Notifications</h3>
+                <button onclick="toggleNotificationModal()" class="text-gray-400 hover:text-white">✕</button>
+            </div>
+            
+            <div class="flex border-b border-slate-700 overflow-x-auto">
+                <button class="tab-btn active" onclick="switchTab('all')">All</button>
+                <button class="tab-btn" onclick="switchTab('sos')">🚨 SOS</button>
+                <button class="tab-btn" onclick="switchTab('accident')">Accident</button>
+                <button class="tab-btn" onclick="switchTab('suspicious')">Suspicious</button>
+                <button class="tab-btn" onclick="switchTab('vvip')">VVIP</button>
+                <button class="tab-btn" onclick="switchTab('pothole')">🕳️ Potholes</button>
+            </div>
+
+            <div id="notif-content" class="overflow-y-auto flex-1 p-0">
+                </div>
+            
+            <div class="p-3 border-t border-slate-700 bg-slate-800/50 text-center">
+                <button class="text-xs text-blue-400 hover:text-blue-300" onclick="markAllRead()">Mark all as read</button>
+            </div>
+        </div>
+    </div>
+    <div class="topbar px-4 py-2 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2">
+          <div
+            class="w-8 h-8 rounded-md bg-gradient-to-br from-sky-600 to-indigo-600 flex items-center justify-center shadow"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M3 12h3l3-8 4 16 3-12 1 6h3"
+                stroke="#fff"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </div>
+          <div>
+            <div class="text-white text-sm font-semibold leading-tight" data-i18n="brand_name">PRAVAH Control</div>
+            <div class="text-[10px] muted leading-tight" data-i18n="brand_subtitle">Central Dashboard</div>
+          </div>
+        </div>
+
+        <div class="ml-4 flex items-center gap-2">
+          <div class="metric-card">
+            <div class="metric-label" data-i18n="m_commute">Avg Commute</div>
+            <div class="metric-value" data-i18n="val_commute">24m</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label" data-i18n="m_co2">CO₂ Red.</div>
+            <div class="metric-value text-green-300">16.8%</div>
+          </div>
+          <div class="metric-card hidden lg:flex">
+            <div class="metric-label" data-i18n="m_air">AQI</div>
+            <div class="metric-value text-green-300">89</div>
+          </div>
+          <div class="metric-card hidden xl:flex">
+            <div class="metric-label" data-i18n="m_cong">Congestion</div>
+            <div class="metric-value text-yellow-300" data-i18n="val_mod">MODERATE</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <button id="notif-btn" class="relative p-2 text-gray-400 hover:text-white transition-colors focus:outline-none" onclick="toggleNotificationModal()">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+            <span id="notif-badge" class="absolute top-1 right-1 block h-2.5 w-2.5 rounded-full ring-2 ring-slate-900 bg-red-500 animate-pulse hidden"></span>
+        </button>
+
+        <div class="lang-container">
+            <svg class="w-3 h-3 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"></path></svg>
+            <select id="langToggle" class="lang-select">
+                <option value="en">Eng</option>
+                <option value="hi">Hin</option>
+                <option value="or">Odi</option>
+            </select>
+            <div class="lang-arrow">
+                <svg width="8" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+        </div>
+
+        <div class="text-right leading-tight">
+          <div id="dateDisplay" class="text-[10px] muted"></div>
+          <div id="timeDisplay" class="text-xs font-semibold"></div>
+        </div>
+        <div>
+          <button class="action-btn">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="9" stroke="#ff6b6b" stroke-width="1.2" />
+            </svg>
+            <a href="menu.html"><span data-i18n="btn_menu">Menu</span></a>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="main-grid">
+      <div class="col-scroll">
+        
+        <div class="card card-highlight mb-4">
+          <div class="flex items-center justify-between mb-3">
+            <h4 class="font-semibold text-blue-100" data-i18n="head_interventions">Current Interventions</h4>
+            <div class="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-lg animate-pulse">PRIORITY</div>
+          </div>
+          <div class="space-y-4">
+            <a href="./intersection_control.html" class="block rounded-xl overflow-hidden no-underline hover:bg-gray-800/50 transition-colors">
+              <div
+                class="bg-gradient-to-r from-gray-800 to-gray-900 p-4 shadow-md border border-gray-700"
+              >
+                <div class="flex items-center justify-between mb-2">
+                  <span
+                    class="px-2 py-1 text-xs font-medium rounded-full bg-blue-900 text-blue-300"
+                    data-i18n="tag_sig_ext"
+                    >Signal Extension</span
+                  >
+                  <span class="text-xs text-gray-400 flex items-center gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3" />
+                    </svg>
+                    12:33:15
+                  </span>
+                </div>
+                <h3 class="font-medium text-white" data-i18n="loc_mg">MG Road Junction</h3>
+                <p class="text-gray-400 text-sm" data-i18n="desc_green_ext">Extended green by 30s</p>
+              </div>
+            </a>
+
+            <div
+              class="bg-gradient-to-r from-gray-800 to-gray-900 rounded-xl p-4 shadow-md border border-gray-700"
+            >
+              <div class="flex items-center justify-between mb-2">
+                <span
+                  class="px-2 py-1 text-xs font-medium rounded-full bg-indigo-900 text-indigo-300"
+                  data-i18n="tag_divert"
+                  >Route Diversion</span
+                >
+                <span class="text-xs text-gray-400 flex items-center gap-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3" />
+                  </svg>
+                  12:30:45
+                </span>
+              </div>
+              <h3 class="font-medium" data-i18n="loc_city">City Center</h3>
+              <p class="text-gray-400 text-sm" data-i18n="desc_divert">Diverted to alternate route</p>
+            </div>
+
+            <div
+              class="bg-gradient-to-r from-gray-800 to-gray-900 rounded-xl p-4 shadow-md border border-gray-700"
+            >
+              <div class="flex items-center justify-between mb-2">
+                <span
+                  class="px-2 py-1 text-xs font-medium rounded-full bg-cyan-900 text-cyan-300"
+                  data-i18n="tag_priority"
+                  >Emergency Priority</span
+                >
+                <span class="text-xs text-gray-400 flex items-center gap-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3" />
+                  </svg>
+                  12:28:30
+                </span>
+              </div>
+              <h3 class="font-medium" data-i18n="loc_hosp">Hospital Route</h3>
+              <p class="text-gray-400 text-sm" data-i18n="desc_ambu">Ambulance corridor active</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mb-4">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M3 7h13v10H3z" stroke="#8fb3ff" stroke-width="1.2" />
+              </svg>
+              <h4 class="font-semibold" data-i18n="head_feeds">Live Video Feeds</h4>
+            </div>
+            <div class="chip">
+              <span
+                class="inline-block w-2 h-2 rounded-full bg-green-400 mr-2"
+              ></span
+              ><span data-i18n="chip_active_cams">3 Active</span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div
+              id="mg-road-feed"
+              class="relative rounded-md overflow-hidden"
+              style="
+                background: linear-gradient(
+                  180deg,
+                  rgba(59, 130, 246, 0.03),
+                  rgba(255, 255, 255, 0.01)
+                );
+                height: 92px;
+                cursor: pointer;
+              "
+            >
+              <div class="p-3 flex flex-col justify-between h-full">
+                <a href="video_feed1.html"><div class="text-sm font-semibold" data-i18n="loc_mg">MG Road Junction</div>
+                <div class="text-xs muted">12:34:21</div></a>
+              </div>
+              <div style="position: absolute; right: 8px; top: 8px">
+                <div class="w-2.5 h-2.5 rounded-full bg-green-400"></div>
+              </div>
+            </div>
+            <div
+              class="relative rounded-md overflow-hidden"
+              style="
+                background: linear-gradient(
+                  180deg,
+                  rgba(59, 130, 246, 0.03),
+                  rgba(255, 255, 255, 0.01)
+                );
+                height: 92px;
+              "
+            >
+              <div class="p-3 flex flex-col justify-between h-full">
+                <a href="video_feed2.html"><div class="text-sm font-semibold" data-i18n="loc_city">City Center</div>
+                <div class="text-xs muted">12:34:19</div>
+              </div></a>
+              <div style="position: absolute; right: 8px; top: 8px">
+                <div class="w-2.5 h-2.5 rounded-full bg-green-400"></div>
+              </div>
+            </div>
+            <div
+              class="relative rounded-md overflow-hidden"
+              style="
+                background: linear-gradient(
+                  180deg,
+                  rgba(59, 130, 246, 0.03),
+                  rgba(255, 255, 255, 0.01)
+                );
+                height: 92px;
+              "
+            >
+              <div class="p-3 flex flex-col justify-between h-full">
+                <a href="video_feed3.html"><div class="text-sm font-semibold" data-i18n="loc_highway">Highway Exit</div>
+                <div class="text-xs muted">12:30:15</div>
+              </div></a>
+              <div style="position: absolute; right: 8px; top: 8px">
+                <div class="w-2.5 h-2.5 rounded-full bg-yellow-400"></div>
+              </div>
+            </div>
+            <div
+              class="relative rounded-md overflow-hidden"
+              style="
+                background: linear-gradient(
+                  180deg,
+                  rgba(59, 130, 246, 0.03),
+                  rgba(255, 255, 255, 0.01)
+                );
+                height: 92px;
+              "
+            >
+              <div class="p-3 flex flex-col justify-between h-full">
+                <a href="video_feed4.html"><div class="text-sm font-semibold" data-i18n="loc_bus">Bus Terminal</div>
+                <div class="text-xs muted">12:34:20</div>
+              </div></a>
+              <div style="position: absolute; right: 8px; top: 8px">
+                <div class="w-2.5 h-2.5 rounded-full bg-green-400"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="map-card">
+        <div class="card mb-4" style="padding-bottom: 12px">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold" data-i18n="head_map">Live Traffic Map</h3>
+            <div class="flex items-center gap-3">
+              <div class="chip">
+                <span
+                  class="inline-block w-2.5 h-2.5 rounded-full bg-green-400 mr-2"
+                ></span
+                ><span data-i18n="chip_active_sig">12 Active Signals</span>
+              </div>
+              <div class="chip">
+                <span
+                  class="inline-block w-2.5 h-2.5 rounded-full bg-yellow-400 mr-2"
+                ></span
+                ><span data-i18n="chip_hotspots">3 Hotspots</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="map" class="mb-3"></div>
+
+          <div class="flex items-center justify-between small-muted text-xs">
+            <div><span data-i18n="lbl_updated">Last updated</span>: <span id="lastUpdate">--:--:--</span></div>
+            <div data-i18n="lbl_sensors">Real-time data from 247 sensors</div>
+          </div>
+        </div>
+
+        <div class="card mb-4">
+          <div class="flex items-center justify-between mb-3">
+            <h4 class="font-semibold flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
+              </svg>
+              <span data-i18n="head_co2">CO₂ Emissions</span>
+            </h4>
+            <div class="chip bg-green-900/20 text-green-400 px-2 py-1 rounded" data-i18n="tag_trending">
+              Trending Down
+            </div>
+          </div>
+
+          <div class="w-full relative" style="height: 140px;">
+            <canvas id="co2EmissionsChart"></canvas>
+          </div>
+
+          <div class="text-center mt-2 flex justify-center items-center gap-3">
+             <div class="text-sm text-gray-400" data-i18n="lbl_rate">Current Rate:</div>
+             <h2 class="text-xl font-bold text-green-400">1.8t/hr</h2>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-4">
+          <div class="card text-center">
+            <div class="small-muted" data-i18n="m_commute_s">Avg Commute</div>
+            <div class="text-2xl font-bold">
+              24 <span class="small-muted" data-i18n="unit_min">min</span>
+            </div>
+            <div class="text-xs text-green-400 mt-1" data-i18n="diff_yest">-14.3% vs yesterday</div>
+          </div>
+          <div class="card text-center">
+            <div class="small-muted" data-i18n="m_violations">Violations Today</div>
+            <div class="text-2xl font-bold">100</div>
+            <div class="text-xs small-muted mt-1" data-i18n="desc_enforce">
+              Active enforcement ongoing
+            </div>
+            
+          </div>
+          <div class="card text-center">
+            <div class="small-muted" data-i18n="m_priority">Priority Activations</div>
+            <div class="text-2xl font-bold">7</div>
+            <div class="text-xs small-muted mt-1" data-i18n="desc_transit">Transit & Emergency</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // ================= TRANSLATION DATA =================
+      const translations = {
+        en: {
+          brand_name: "PRAVAH Control",
+          brand_subtitle: "Central Dashboard",
+          m_commute: "Avg Commute",
+          val_commute: "24m",
+          m_co2: "CO₂ Red.",
+          m_air: "AQI",
+          m_cong: "Congestion",
+          val_mod: "MODERATE",
+          btn_menu: "Menu",
+          head_feeds: "Live Video Feeds",
+          chip_active_cams: "3 Active",
+          loc_mg: "MG Road Junction",
+          loc_city: "City Center",
+          loc_highway: "Highway Exit",
+          loc_bus: "Bus Terminal",
+          loc_hosp: "Hospital Route",
+          head_interventions: "Current Interventions",
+          chip_active_ints: "3 Active",
+          tag_sig_ext: "Signal Extension",
+          desc_green_ext: "Extended green by 30s",
+          tag_divert: "Route Diversion",
+          desc_divert: "Diverted to alternate route",
+          tag_priority: "Emergency Priority",
+          desc_ambu: "Ambulance corridor active",
+          head_co2: "CO₂ Emissions",
+          tag_trending: "Trending Down",
+          lbl_rate: "Current Rate",
+          head_map: "Live Traffic Map",
+          chip_active_sig: "12 Active Signals",
+          chip_hotspots: "3 Hotspots",
+          lbl_updated: "Last updated",
+          lbl_sensors: "Real-time data from 247 sensors",
+          m_commute_s: "Avg Commute",
+          unit_min: "min",
+          diff_yest: "-14.3% vs yesterday",
+          m_violations: "Violations Today",
+          desc_enforce: "Active enforcement ongoing",
+          m_priority: "Priority Activations",
+          desc_transit: "Transit & Emergency",
+          head_forecast: "Traffic Forecast (Next 90 min)",
+          head_hotspots: "Predicted Congestion Hotspots",
+          info_mg: "Expected at 13:15 · 87% confidence",
+          lvl_high: "HIGH",
+          info_city: "Expected at 13:30 · 74% confidence",
+          lvl_mod: "MODERATE",
+          info_high: "Expected at 14:00 · 92% confidence",
+          lvl_low: "LOW",
+          head_adj: "Suggested Signal Adjustments",
+          sig_curr1: "Current: 45s Green / 15s Red",
+          sig_sugg1: "Suggested: 60s Green / 20s Red",
+          btn_apply: "Apply",
+          sig_curr2: "Current: 30s Green / 20s Red",
+          sig_sugg2: "Suggested: 35s Green / 15s Red",
+          head_vol: "Traffic Volume Trend",
+          m_priority_s: "Priority Acts",
+          m_co2_s: "CO₂ Reduction",
+          // Chart Labels
+          chart_co2: "Daily CO₂ Emissions (tons)",
+          chart_cong: "Congestion",
+          chart_veh: "Vehicles",
+          // Map Tooltips (Dynamic)
+          map_opt: "Zone A: Optimal",
+          map_cong: "Zone B: Congested",
+          map_sugg: "Apply Suggestion"
+        },
+        hi: {
+          brand_name: "प्रवाह नियंत्रण",
+          brand_subtitle: "केंद्रीय डैशबोर्ड",
+          m_commute: "यात्रा समय",
+          val_commute: "24मि",
+          m_co2: "CO₂ कमी",
+          m_air: "AQI",
+          m_cong: "भीड़भाड़",
+          val_mod: "मध्यम",
+          btn_menu: "मेनू",
+          head_feeds: "लाइव वीडियो फीड",
+          chip_active_cams: "3 सक्रिय",
+          loc_mg: "एमजी रोड जंक्शन",
+          loc_city: "सिटी सेंटर",
+          loc_highway: "राजमार्ग निकास",
+          loc_bus: "बस टर्मिनल",
+          loc_hosp: "अस्पताल मार्ग",
+          head_interventions: "वर्तमान हस्तक्षेप",
+          chip_active_ints: "3 सक्रिय",
+          tag_sig_ext: "सिग्नल विस्तार",
+          desc_green_ext: "हरा सिग्नल 30 सेकंड बढ़ाया गया",
+          tag_divert: "रूट डायवर्जन",
+          desc_divert: "वैकल्पिक मार्ग पर भेजा गया",
+          tag_priority: "आपातकालीन प्राथमिकता",
+          desc_ambu: "एम्बुलेंस कॉरिडोर सक्रिय",
+          head_co2: "CO₂ उत्सर्जन",
+          tag_trending: "नीचे की ओर",
+          lbl_rate: "वर्तमान दर",
+          head_map: "लाइव ट्रैफ़िक मानचित्र",
+          chip_active_sig: "12 सक्रिय सिग्नल",
+          chip_hotspots: "3 भीड़भाड़ क्षेत्र",
+          lbl_updated: "अंतिम अपडेट",
+          lbl_sensors: "247 सेंसर से रीयल-टाइम डेटा",
+          m_commute_s: "यात्रा समय",
+          unit_min: "मिनट",
+          diff_yest: "-14.3% कल की तुलना में",
+          m_violations: "आज के उल्लंघन",
+          desc_enforce: "सक्रिय चालान जारी",
+          m_priority: "प्राथमिकता सक्रियण",
+          desc_transit: "पारगमन और आपातकालीन",
+          head_forecast: "ट्रैफ़िक पूर्वानुमान (अगले 90 मिनट)",
+          head_hotspots: "संभावित भीड़भाड़ वाले क्षेत्र",
+          info_mg: "13:15 पर संभावित · 87% विश्वास",
+          lvl_high: "उच्च",
+          info_city: "13:30 पर संभावित · 74% विश्वास",
+          lvl_mod: "मध्यम",
+          info_high: "14:00 पर संभावित · 92% विश्वास",
+          lvl_low: "कम",
+          head_adj: "सुझाए गए सिग्नल समायोजन",
+          sig_curr1: "वर्तमान: 45s हरा / 15s लाल",
+          sig_sugg1: "सुझाव: 60s हरा / 20s लाल",
+          btn_apply: "लागू करें",
+          sig_curr2: "वर्तमान: 30s हरा / 20s लाल",
+          sig_sugg2: "सुझाव: 35s हरा / 15s लाल",
+          head_vol: "ट्रैफ़िक वॉल्यूम ट्रेंड",
+          m_priority_s: "प्राथमिकता कार्य",
+          m_co2_s: "CO₂ कमी",
+          chart_co2: "दैनिक CO₂ उत्सर्जन (टन)",
+          chart_cong: "भीड़भाड़",
+          chart_veh: "वाहन",
+          map_opt: "क्षेत्र A: अनुकूल",
+          map_cong: "क्षेत्र B: भीड़भाड़",
+          map_sugg: "सुझाव लागू करें"
+        },
+        or: {
+          brand_name: "ପ୍ରବାହ ନିୟନ୍ତ୍ରଣ",
+          brand_subtitle: "କେନ୍ଦ୍ରୀୟ ଡ୍ୟାସବୋର୍ଡ",
+          m_commute: "ଯାତ୍ରା ସମୟ",
+          val_commute: "24ମି",
+          m_co2: "CO₂ ହ୍ରାସ",
+          m_air: "AQI",
+          m_cong: "ଭିଡ଼",
+          val_mod: "ମଧ୍ୟମ",
+          btn_menu: "ମେନୁ",
+          head_feeds: "ଲାଇଭ୍ ଭିଡିଓ ଫିଡ୍",
+          chip_active_cams: "3 ସକ୍ରିୟ",
+          loc_mg: "ଏମ୍.ଜି ରୋଡ୍ ଛକ",
+          loc_city: "ସିଟି ସେଣ୍ଟର",
+          loc_highway: "ରାଜପଥ ପ୍ରସ୍ଥାନ",
+          loc_bus: "ବସ୍ ଟର୍ମିନାଲ୍",
+          loc_hosp: "ଡାକ୍ତରଖାନା ରୁଟ୍",
+          head_interventions: "ବର୍ତ୍ତମାନର ହସ୍ତକ୍ଷେପ",
+          chip_active_ints: "3 ସକ୍ରିୟ",
+          tag_sig_ext: "ସିଗନାଲ୍ ସମ୍ପ୍ରସାରଣ",
+          desc_green_ext: "ସବୁଜ ସିଗନାଲ୍ 30 ସେକେଣ୍ଡ ବୃଦ୍ଧି ହୋଇଛି",
+          tag_divert: "ରୁଟ୍ ପରିବର୍ତ୍ତନ",
+          desc_divert: "ବିକଳ୍ପ ରାସ୍ତାକୁ ପଠାଯାଇଛି",
+          tag_priority: "ଜରୁରୀକାଳୀନ ପ୍ରାଥମିକତା",
+          desc_ambu: "ଆମ୍ବୁଲାନ୍ସ କରିଡର ସକ୍ରିୟ",
+          head_co2: "CO₂ ନିର୍ଗମନ",
+          tag_trending: "କମୁଛି",
+          lbl_rate: "ବର୍ତ୍ତମାନର ହାର",
+          head_map: "ଲାଇଭ୍ ଟ୍ରାଫିକ୍ ମ୍ୟାପ୍",
+          chip_active_sig: "12 ସକ୍ରିୟ ସିଗନାଲ୍",
+          chip_hotspots: "3 ଅତ୍ୟଧିକ ଭିଡ଼",
+          lbl_updated: "ଶେଷ ଅପଡେଟ୍",
+          lbl_sensors: "247 ସେନ୍ସରରୁ ରିଅଲ୍-ଟାଇମ୍ ତଥ୍ୟ",
+          m_commute_s: "ଯାତ୍ରା ସମୟ",
+          unit_min: "ମିନିଟ୍",
+          diff_yest: "-14.3% ଗତକାଲି ତୁଳନାରେ",
+          m_violations: "ଆଜିର ନିୟମ ଉଲ୍ଲଂଘନ",
+          desc_enforce: "ଚାଲାଣ କଟା ଚାଲିଛି",
+          m_priority: "ପ୍ରାଥମିକତା ସକ୍ରିୟକରଣ",
+          desc_transit: "ପରିବହନ ଏବଂ ଜରୁରୀକାଳୀନ",
+          head_forecast: "ଟ୍ରାଫିକ୍ ପୂର୍ବାନୁମାନ",
+          head_hotspots: "ସମ୍ଭାବ୍ୟ ଭିଡ଼ ସ୍ଥାନ",
+          info_mg: "13:15 ରେ ସମ୍ଭାବିତ · 87% ନିଶ୍ଚିତତା",
+          lvl_high: "ଅଧିକ",
+          info_city: "13:30 ରେ ସମ୍ଭାବିତ · 74% ନିଶ୍ଚିତତା",
+          lvl_mod: "ମଧ୍ୟମ",
+          info_high: "14:00 ରେ ସମ୍ଭାବିତ · 92% ନିଶ୍ଚିତତା",
+          lvl_low: "କମ୍",
+          head_adj: "ପ୍ରସ୍ତାବିତ ସିଗନାଲ୍ ପରିବର୍ତ୍ତନ",
+          sig_curr1: "ବର୍ତ୍ତମାନ: 45s ସବୁଜ / 15s ଲାଲ୍",
+          sig_sugg1: "ପ୍ରସ୍ତାବିତ: 60s ସବୁଜ / 20s ଲାଲ୍",
+          btn_apply: "ପ୍ରୟୋଗ କରନ୍ତୁ",
+          sig_curr2: "ବର୍ତ୍ତମାନ: 30s ସବୁଜ / 20s ଲାଲ୍",
+          sig_sugg2: "ପ୍ରସ୍ତାବିତ: 35s ସବୁଜ / 15s ଲାଲ୍",
+          head_vol: "ଟ୍ରାଫିକ୍ ଭଲ୍ୟୁମ୍ ଧାରା",
+          m_priority_s: "ପ୍ରାଥମିକତା କାର୍ଯ୍ୟ",
+          m_co2_s: "CO₂ ହ୍ରାସ",
+          chart_co2: "ଦୈନିକ CO₂ ନିର୍ଗମନ (ଟନ୍)",
+          chart_cong: "ଭିଡ଼",
+          chart_veh: "ଗାଡି ସଂଖ୍ୟା",
+          map_opt: "ଜୋନ୍ A: ଉତ୍ତମ",
+          map_cong: "ଜୋନ୍ B: ଭିଡ଼",
+          map_sugg: "ପରାମର୍ଶ ପ୍ରୟୋଗ କରନ୍ତୁ"
+        }
+      };
+
+      // Chart Globals
+      let co2Chart, forecastChart, volumeChart;
+      let mapInstance, intersectionLayers = [], polyLayers = [], hotspotMarkers = [], zoneLayers = [];
+
+      function updateClock() {
+        const d = new Date();
+        document.getElementById("dateDisplay").innerText = d.toLocaleDateString(undefined, { weekday: "short", day: "2-digit", month: "short" });
+        document.getElementById("timeDisplay").innerText = d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+      }
+      setInterval(updateClock, 1000);
+      updateClock();
+
+      function applyChange(name) {
+        alert("Applied suggested change: " + name);
+      }
+
+      function initCharts() {
+        // CO2 Chart
+        const co2Ctx = document.getElementById("co2EmissionsChart").getContext("2d");
+        co2Chart = new Chart(co2Ctx, {
+          type: "line",
+          data: {
+            labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+            datasets: [{
+              label: "Daily CO₂ Emissions (tons)",
+              data: [3.5, 3.2, 2.8, 2.9, 2.4, 2.1, 1.8],
+              borderColor: "#ff3333",
+              backgroundColor: "rgba(239, 68, 68, 0.2)",
+              fill: true,
+              tension: 0.4,
+              pointRadius: 3,
+              borderWidth: 2,
+            }],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { ticks: { color: "#94a3b8" }, grid: { color: "rgba(255,255,255,0.02)" } },
+              y: { 
+                ticks: { color: "#94a3b8", callback: (value) => `${value}t` }, 
+                grid: { color: "rgba(255,255,255,0.02)" }, 
+                beginAtZero: false 
+              },
+            },
+          },
+        });
+      }
+
+      function initMap() {
+        mapInstance = L.map("map", { zoomControl: true }).setView([12.9716, 77.5946], 14);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "" }).addTo(mapInstance);
+        mapInstance.getPane("tilePane").style.filter = "grayscale(6%) brightness(72%) contrast(88%)";
+        
+        const center = [12.9716, 77.5946];
+        const latStart = center[0] + 0.008;
+        const lngStart = center[1] - 0.01;
+        const rows = 4; const cols = 5;
+        const latStep = -0.004; const lngStep = 0.005;
+        const intersections = [];
+
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            const lat = latStart + r * latStep;
+            const lng = lngStart + c * lngStep;
+            const id = `I-${r}-${c}`;
+            intersections.push({ id, coords: [lat, lng], row: r, col: c });
+          }
+        }
+
+        for (let r = 0; r < rows; r++) {
+          const rowCoords = [];
+          for (let c = 0; c < cols; c++) rowCoords.push(intersections[r * cols + c].coords);
+          L.polyline(rowCoords, { color: "#0ea5a4", weight: 2, opacity: 0.08 }).addTo(mapInstance);
+        }
+        for (let c = 0; c < cols; c++) {
+          const colCoords = [];
+          for (let r = 0; r < rows; r++) colCoords.push(intersections[r * cols + c].coords);
+          L.polyline(colCoords, { color: "#3b82f6", weight: 2, opacity: 0.06 }).addTo(mapInstance);
+        }
+
+        intersections.forEach((pt) => {
+          L.circleMarker(pt.coords, { radius: 4, fillColor: "#94a3b8", fillOpacity: 0.18, color: "rgba(255,255,255,0.02)", weight: 1 }).addTo(mapInstance);
+        });
+
+        renderHotspots('en');
+      } 
+      // END initMap
+
+        // --- NOTIFICATION CENTER LOGIC ---
+        let currentTab = 'all';
+        
+        // Mock Data
+        const mockNotifs = {
+            sos: [
+                  { id: 99, type: 'SOS', title: 'Ambulance Requesting Priority', loc: 'Approaching MG Road Junction', time: 'LIVE', desc: 'Location: Approaching MG Road Junction', link: 'intersection_control.html' }
+            ],
+            accident: [
+                // ADDED LINK HERE as requested
+                { id: 1, type: 'accident', title: 'Minor Collision', loc: 'Ring Road, Sector 4', time: '10 mins ago', desc: 'Four wheelers involved. Traffic moving slow.', link: 'accident1.html' },
+            ],
+            suspicious: [
+                { id: 3, type: 'suspicious', title: 'Crowd Detected', loc: 'City Center Plaza', time: 'Just now', desc: 'Unusual gathering detected near ATM.', link: 'sus_activity.html' },
+            ],
+            vvip: [
+                 { id: 5, type: 'vvip', title: 'CM Convoy Route', loc: 'Airport to Secretariat', time: 'Scheduled 14:00', desc: 'Route clearance initiated.' }
+            ],
+            // ADDED POTHOLE DATA
+            pothole: [
+                { id: 10, type: 'pothole', title: 'Severe Pothole Detected', loc: 'Service Lane, Sec 62', time: 'Detected 14m ago', desc: 'AI confidence 98%. Maintenance ticket raised.', link: 'pothole.html' },
+                { id: 11, type: 'pothole', title: 'Road Surface Degradation', loc: 'Highway Ramp 4', time: 'Detected 42m ago', desc: 'Cluster of small potholes observed.', link: 'pothole.html' }
+            ]
+        };
+
+        function toggleNotificationModal() {
+             const m = document.getElementById('notif-modal');
+             m.classList.toggle('hidden');
+             renderNotifications();
+             // Clear badge when opened
+             if(!m.classList.contains('hidden')) {
+                 document.getElementById('notif-badge').classList.add('hidden');
+             }
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            currentTab = tab;
+            renderNotifications();
+        }
+
+        function renderNotifications() {
+            const container = document.getElementById('notif-content');
+            container.innerHTML = '';
+            
+            let items = [];
+            // We assume SOS is active for the "Only visible when clicked" demo
+            const sosActive = true; 
+
+            // 1. SOS Item: ONLY visible when explicitly on the 'sos' tab
+            if (sosActive && currentTab === 'sos') {
+                items.push(`
+                    <div class="notif-item notif-sos">
+                        <div class="flex justify-between items-start mb-1">
+                            <span class="font-bold text-red-500 flex items-center gap-2">
+                                <span class="animate-pulse">●</span> EMERGENCY SOS
+                            </span>
+                            <span class="text-xs text-red-400">LIVE</span>
+                        </div>
+                        <h4 class="font-medium text-white mb-1">Ambulance Requesting Priority</h4>
+                        <p class="text-sm text-gray-400 mb-2">Location: Approaching MG Road Junction</p>
+                        <div class="flex gap-2">
+                            <a href="intersection_control.html" class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded">View Intersection</a>
+                            <button class="px-3 py-1 border border-slate-600 hover:bg-slate-700 text-xs rounded">Dismiss</button>
+                        </div>
+                    </div>
+                `);
+            } 
+            else if (currentTab === 'sos' && !sosActive) {
+                items.push(`<div class="p-8 text-center text-gray-500">No active emergency alerts.</div>`);
+            }
+
+            // 2. Other Items (Show in All or Specific Tabs, but EXCLUDE SOS from All)
+            if (currentTab === 'all') {
+                items = items.concat(mockNotifs.accident.map(itemToHTML));
+                items = items.concat(mockNotifs.suspicious.map(itemToHTML));
+                items = items.concat(mockNotifs.vvip.map(itemToHTML));
+                // Include Potholes in All tab
+                if (mockNotifs.pothole) items = items.concat(mockNotifs.pothole.map(itemToHTML));
+            } else if (mockNotifs[currentTab] && currentTab !== 'sos') {
+                items = items.concat(mockNotifs[currentTab].map(itemToHTML));
+            }
+
+            if (items.length === 0) {
+                container.innerHTML = `<div class="p-8 text-center text-gray-500">No notifications in this category.</div>`;
+            } else {
+                container.innerHTML = items.join('');
+            }
+        }
+
+        function itemToHTML(item) {
+             let color = 'blue';
+             if (item.type === 'accident') color = 'orange';
+             if (item.type === 'suspicious') color = 'yellow';
+             if (item.type === 'vvip') color = 'purple';
+             if (item.type === 'pothole') color = 'stone'; // Gray/Stone color for potholes
+             
+             // Define tag type and href attribute based on link presence
+             const tag = item.link ? 'a' : 'div';
+             const hrefAttr = item.link ? `href="${item.link}"` : '';
+             const cursorClass = item.link ? 'cursor-pointer hover:bg-white/5 block no-underline' : '';
+
+             return `
+                <${tag} ${hrefAttr} class="notif-item ${cursorClass}">
+                    <div class="flex justify-between items-start mb-1">
+                        <span class="font-semibold text-${color}-400 uppercase text-xs tracking-wider">${item.type}</span>
+                        <span class="text-xs text-slate-500">${item.time}</span>
+                    </div>
+                    <h4 class="font-medium text-slate-200">${item.title}</h4>
+                    <p class="text-xs text-slate-400 mt-1">📍 ${item.loc}</p>
+                    <p class="text-sm text-slate-400 mt-2">${item.desc}</p>
+                    ${item.link ? `
+                    <div class="mt-2 text-xs font-bold text-${color}-400 flex items-center gap-1">
+                        view DETAILS &rarr;
+                    </div>` : ''}
+                </${tag}>
+             `;
+        }
+
+        function markAllRead() {
+             document.getElementById('notif-badge').classList.add('hidden');
+             toggleNotificationModal();
+        }
+        
+      function initMapLater() {
+           // Helper if needed
+           mapInstance.invalidateSize();
+      }
+      function makeDivIcon(level) {
+        const cls = level === "high" ? "hot-red" : level === "moderate" ? "hot-amber" : level === "low" ? "hot-green" : "hot-blue";
+        return L.divIcon({ className: "", html: `<div class="hotspot-marker ${cls}"></div>`, iconSize: [30, 30], iconAnchor: [15, 15] });
+      }
+
+      function renderHotspots(lang) {
+        hotspotMarkers.forEach(m => mapInstance.removeLayer(m));
+        hotspotMarkers = [];
+
+        const t = translations[lang];
+        const spots = [
+          { coords: [12.9716 + 0.008, 77.5946 - 0.01 + 0.005], level: "high", name: t.loc_mg, info: t.info_mg },
+          { coords: [12.9716 + 0.004, 77.5946 - 0.01 + 0.015], level: "moderate", name: t.loc_city, info: t.info_city },
+          { coords: [12.9716, 77.5946 - 0.01], level: "low", name: t.loc_highway, info: t.info_high },
+          { coords: [12.9716 - 0.004, 77.5946 - 0.01 + 0.020], level: "medium", name: t.loc_bus, info: "" }
+        ];
+
+        spots.forEach(h => {
+           const marker = L.marker(h.coords, { icon: makeDivIcon(h.level) }).addTo(mapInstance);
+           marker.bindPopup(`<div style="min-width:180px"><strong>${h.name}</strong><div style="color:#94a3b8; font-size:12px; margin-top:6px">${h.info}</div><div style="margin-top:8px;"><button onclick="applyChange('${h.name}')" class="action-btn" style="font-size:10px">${t.map_sugg}</button></div></div>`);
+           hotspotMarkers.push(marker);
+        });
+      }
+
+      function renderZones(lang) {
+        zoneLayers.forEach(z => mapInstance.removeLayer(z));
+        zoneLayers = [];
+        
+        const t = translations[lang];
+        const center = [12.9716, 77.5946];
+        const latStart = center[0] + 0.008;
+        const lngStart = center[1] - 0.01;
+
+        const z1 = L.polygon([
+          [latStart + 0.001, lngStart + 0.001], [latStart + 0.001, lngStart + 0.014],
+          [latStart - 0.006, lngStart + 0.014], [latStart - 0.006, lngStart + 0.001]
+        ], { color: "#06d6a0", weight: 1, fillColor: "rgba(6,214,160,0.03)" }).addTo(mapInstance).bindTooltip(t.map_opt, { permanent: true, direction: "center", className: "small-muted" });
+        
+        const z2 = L.polygon([
+          [latStart - 0.004, lngStart + 0.006], [latStart - 0.004, lngStart + 0.022],
+          [latStart - 0.012, lngStart + 0.022], [latStart - 0.012, lngStart + 0.006]
+        ], { color: "#f59e0b", weight: 1, fillColor: "rgba(245,158,11,0.02)" }).addTo(mapInstance).bindTooltip(t.map_cong, { permanent: true, direction: "center", className: "small-muted" });
+
+        zoneLayers.push(z1, z2);
+      }
+      function updateLanguage(lang) {
+        document.body.className = `lang-${lang}`;
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+          const key = el.getAttribute('data-i18n');
+          if(translations[lang][key]) el.innerText = translations[lang][key];
+        });
+        const t = translations[lang];
+        if(co2Chart) { co2Chart.data.datasets[0].label = t.chart_co2; co2Chart.update(); }
+        
+        if(mapInstance) {
+            renderHotspots(lang);
+            renderZones(lang);
+        }
+      }
+      document.getElementById('langToggle').addEventListener('change', (e) => {
+        updateLanguage(e.target.value);
+      });
+      initCharts();
+      initMap();
+      updateLanguage('en');
+    </script>
+  </body>
+</html>

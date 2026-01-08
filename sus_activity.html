@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suspicious Activity Monitor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Noto+Sans+Oriya:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --border: rgba(255, 255, 255, 0.08);
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --accent-orange: #f97316;
+            --accent-red: #ef4444;
+            --accent-blue: #3b82f6;
+        }
+        
+        body { 
+            background-color: var(--bg);
+            font-family: 'Inter', sans-serif;
+            color: var(--text-primary);
+        }
+
+        .topbar {
+            backdrop-filter: blur(8px);
+            background-color: rgba(15, 23, 42, 0.8);
+            border-bottom: 1px solid var(--border);
+        }
+        .card {
+            background-color: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);
+        }
+        
+        /* Map Specifics - Light Mode Overrides */
+        #map { 
+            height: 250px; 
+            border-radius: 0.5rem; 
+            width: 100%; 
+            border: 2px solid white; /* White border for the light map */
+        }
+
+        /* Custom Marker Icons */
+        .police-icon {
+            background-color: var(--accent-blue);
+            color: white;
+            text-align: center;
+            line-height: 30px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 4px;
+            border: 2px solid white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+        .suspicious-pin {
+            background-color: var(--accent-orange);
+            border-radius: 50%;
+            border: 3px solid white;
+            width: 24px !important;
+            height: 24px !important;
+            margin-left: -12px !important;
+            margin-top: -12px !important;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            animation: pulse-ring 2s infinite;
+        }
+
+        @keyframes pulse-ring {
+            0% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(249, 115, 22, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0); }
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .btn-police { background-color: #3b82f6; color: white; }
+        .btn-police:hover { background-color: #2563eb; }
+        
+        /* Success State for Button */
+        .btn-success { background-color: #22c55e !important; color: white; cursor: default; }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+    <header class="topbar px-6 py-4 flex justify-between items-center z-10">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded bg-orange-500/20 flex items-center justify-center border border-orange-500/50">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold text-white tracking-wide">SUSPICIOUS ACTIVITY MONITOR</h1>
+                <p class="text-xs text-gray-400">AI Surveillance System • Sector 4 Node</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="bg-red-500/10 border border-red-500/30 px-4 py-1 rounded-full flex items-center gap-2 animate-pulse">
+                <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                <span class="text-sm font-bold text-red-400">LIVE THREAT</span>
+            </div>
+            <div class="text-right">
+                <p class="text-sm font-mono text-gray-300" id="clock">12:00:00</p>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 p-6 grid grid-cols-1 lg:grid-cols-3 gap-6 overflow-hidden">
+        
+        <div class="lg:col-span-2 flex flex-col gap-6 h-full">
+            <div class="card p-0 overflow-hidden border-orange-500/50 shadow-[0_0_20px_rgba(249,115,22,0.15)] flex-1 relative bg-black">
+                <div class="absolute top-4 left-4 z-10 flex gap-2">
+                    <span class="bg-black/60 backdrop-blur px-2 py-1 rounded text-xs font-mono text-red-400 border border-red-500/30">CAM-04-NORTH</span>
+                    <span class="bg-black/60 backdrop-blur px-2 py-1 rounded text-xs font-mono text-white border border-white/10">REC ●</span>
+                </div>
+                <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-48 border-2 border-orange-500 opacity-60 pointer-events-none">
+                    <div class="absolute -top-6 left-0 bg-orange-500 text-black text-xs font-bold px-1">CROWD DETECTED</div>
+                </div>
+                <video id="surveillance-feed" class="w-full h-full object-cover" autoplay loop muted>
+                    <source src="Crowd.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+        </div>
+
+        <div class="lg:col-span-1 flex flex-col h-full overflow-y-auto pr-1">
+            
+            <div class="card flex flex-col gap-5 h-full">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-gray-800 p-3 rounded border border-gray-700">
+                        <p class="text-xs text-gray-400 mb-1">Activity Type</p>
+                        <p class="text-lg font-bold text-orange-400 leading-tight">Suspicious act detected</p>
+                    </div>
+                    <div class="bg-gray-800 p-3 rounded border border-gray-700">
+                        <p class="text-xs text-gray-400 mb-1">People Count</p>
+                        <p class="text-lg font-bold text-white leading-tight"> (>=10)<span class="text-xs font-normal text-orange-300"></span></p>
+                    </div>
+                </div>
+
+                <div class="space-y-3 border-t border-gray-700 pt-4">
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-400">Location:</span>
+                        <span class="text-sm text-white font-medium">MG Road, Sector 4</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-400">Time Detected:</span>
+                        <span class="text-sm text-white font-mono" id="detect-time">12:00:05</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-400">Weapon Detected:</span>
+                        <span class="text-sm text-green-400 font-bold">Negative</span>
+                    </div>
+                </div>
+
+                <div class="border-t border-gray-700 pt-4">
+                    <p class="text-xs text-gray-400 mb-1">Nearest Police Station</p>
+                    <div class="flex items-center gap-2 text-blue-400 font-bold">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                        Sector 4 Station
+                    </div>
+                </div>
+
+                <button id="alertBtn" class="action-btn btn-police flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                    ALERT POLICE
+                </button>
+
+                <div class="flex-1 flex flex-col border-t border-gray-700 pt-4">
+                    <h2 class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">Geotagged Location</h2>
+                    <div id="map" class="flex-grow shadow-inner"></div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        // --- Clock Logic ---
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').innerText = now.toLocaleTimeString();
+            
+            // Set static detection time relative to now for realism
+            if(!document.getElementById('detect-time').hasAttribute('data-set')) {
+                document.getElementById('detect-time').innerText = now.toLocaleTimeString();
+                document.getElementById('detect-time').setAttribute('data-set', 'true');
+            }
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // --- Alert Button Logic ---
+        const alertBtn = document.getElementById('alertBtn');
+        alertBtn.addEventListener('click', function() {
+            // Change button text and styling
+            this.innerHTML = `
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                Alert sent to Police Station
+            `;
+            this.classList.remove('btn-police');
+            this.classList.add('btn-success');
+            this.disabled = true; // Disable clicking again
+        });
+
+        // --- Map Logic ---
+        const map = L.map('map', {
+            zoomControl: false,
+            attributionControl: false
+        }).setView([20.2730, 85.8330], 15);
+
+        // LIGHT MODE Map Tiles (CartoDB Positron)
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            maxZoom: 20
+        }).addTo(map);
+
+        // Custom Icons
+        const suspiciousIcon = L.divIcon({
+            className: 'suspicious-pin',
+            iconSize: [24, 24],
+            iconAnchor: [12, 12]
+        });
+
+        const policeIcon = L.divIcon({
+            className: 'police-icon',
+            html: 'P',
+            iconSize: [30, 30],
+            iconAnchor: [15, 15]
+        });
+
+        // Add Markers (Matched to Text)
+        L.marker([20.2730, 85.8330], { icon: suspiciousIcon }).addTo(map)
+            .bindPopup("<b>MG Road, Sector 4</b><br>Activity: Suspicious act").openPopup();
+
+        L.marker([20.2780, 85.8380], { icon: policeIcon }).addTo(map)
+            .bindPopup("<b>Sector 6 Station</b><br>Nearest Response Unit");
+
+    </script>
+</body>
+</html>

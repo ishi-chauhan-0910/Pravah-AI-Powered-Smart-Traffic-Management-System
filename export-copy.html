@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Export Copy - PraVah Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        :root {
+            --bg-dark: #0a0a1a;
+            --bg-card: #12122a;
+            --bg-hover: #1a1a3a;
+            --border: #2a2a4a;
+            --text-primary: #ffffff;
+            --text-secondary: #8888aa;
+            --primary: #2e7d9c;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, var(--primary), var(--success));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+            border-color: var(--primary);
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+        }
+
+        @media (max-width: 700px) {
+            .options-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .option-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 30px;
+            transition: all 0.3s ease;
+        }
+
+        .option-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(46, 125, 156, 0.2);
+        }
+
+        .option-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+        }
+
+        .option-icon.pm {
+            background: linear-gradient(135deg, rgba(46, 125, 156, 0.2), rgba(16, 185, 129, 0.2));
+        }
+
+        .option-icon.manual {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(239, 68, 68, 0.2));
+        }
+
+        .option-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+        }
+
+        .option-description {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+
+        .pm-btn {
+            width: 100%;
+            padding: 15px 25px;
+            background: linear-gradient(135deg, var(--primary), var(--success));
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .pm-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(46, 125, 156, 0.4);
+        }
+
+        .pm-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .email-input-group {
+            margin-bottom: 20px;
+        }
+
+        .email-input-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .email-input {
+            width: 100%;
+            padding: 14px 18px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .email-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(46, 125, 156, 0.2);
+        }
+
+        .email-input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .send-btn {
+            width: 100%;
+            padding: 15px 25px;
+            background: linear-gradient(135deg, var(--warning), #ef4444);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .send-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(245, 158, 11, 0.4);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Success/Error Toast */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            opacity: 0;
+            transition: all 0.4s ease;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success {
+            background: linear-gradient(135deg, var(--success), #059669);
+            color: white;
+        }
+
+        .toast.error {
+            background: linear-gradient(135deg, var(--danger), #dc2626);
+            color: white;
+        }
+
+        .loading-spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* PDF Preview Section */
+        .pdf-preview-section {
+            margin-top: 40px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 25px;
+        }
+
+        .pdf-preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .pdf-preview-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .pdf-preview-badge {
+            padding: 6px 12px;
+            background: rgba(46, 125, 156, 0.2);
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: var(--primary);
+        }
+
+        .pdf-preview-content {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            color: #1a1a2e;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .pdf-preview-content h3 {
+            color: #2e7d9c;
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .pdf-preview-content p {
+            color: #666;
+            font-size: 0.85rem;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <a href="cm_dashboard-2.html" class="back-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7" />
+        </svg>
+        Back to Dashboard
+    </a>
+
+    <div class="container">
+        <div class="header">
+            <h1>📤 Export Report Copy</h1>
+            <p>Send the PraVah Dashboard Report to the Prime Minister's Office or any custom email</p>
+        </div>
+
+        <div class="options-grid">
+            <!-- Option 1: Send to PM -->
+            <div class="option-card">
+                <div class="option-icon pm">🏛️</div>
+                <div class="option-title">Send to PM</div>
+                <div class="option-description">
+                    Send the dashboard report directly to the Prime Minister's Office official email for immediate
+                    review.
+                </div>
+                <button class="pm-btn" id="sendToPmBtn" onclick="sendToPM()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
+                    </svg>
+                    Send to PM
+                </button>
+            </div>
+
+            <!-- Option 2: Manual Email -->
+            <div class="option-card">
+                <div class="option-icon manual">✉️</div>
+                <div class="option-title">Manual Email</div>
+                <div class="option-description">
+                    Enter a custom email address to send the dashboard report to any recipient of your choice.
+                </div>
+                <div class="email-input-group">
+                    <label for="emailInput">Recipient Email Address</label>
+                    <input type="email" id="emailInput" class="email-input" placeholder="Enter email address...">
+                </div>
+                <button class="send-btn" id="sendManualBtn" onclick="sendManualEmail()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                        <polyline points="22,6 12,13 2,6" />
+                    </svg>
+                    Send Email
+                </button>
+            </div>
+        </div>
+
+        <!-- PDF Preview Section -->
+        <div class="pdf-preview-section">
+            <div class="pdf-preview-header">
+                <div class="pdf-preview-title">📄 Report Preview</div>
+                <div class="pdf-preview-badge">PDF Attachment</div>
+            </div>
+            <div class="pdf-preview-content" id="pdfContent">
+                <div
+                    style="text-align: center; border-bottom: 3px solid #2e7d9c; padding-bottom: 20px; margin-bottom: 25px;">
+                    <div style="font-size: 1.8rem; font-weight: 700; color: #2e7d9c;">🚦 PraVah Dashboard Report</div>
+                    <div style="color: #666; font-size: 1rem;">Odisha State Traffic Management System</div>
+                    <div style="color: #888; font-size: 0.9rem; margin-top: 8px;" id="reportDate"></div>
+                </div>
+
+                <div style="margin-bottom: 25px;">
+                    <div
+                        style="font-size: 1.2rem; font-weight: 700; color: #2e7d9c; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; margin-bottom: 15px;">
+                        📊 Key Performance Indicators</div>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+                        <div
+                            style="background: #f8f9fa; border-radius: 10px; padding: 15px; border-left: 4px solid #2e7d9c;">
+                            <div style="font-size: 1.5rem; font-weight: 700; color: #1a1a2e;">1.8M</div>
+                            <div style="color: #666; font-size: 0.85rem;">Total Vehicles Managed</div>
+                            <div style="color: #10b981; font-size: 0.8rem; margin-top: 5px;">↑ 11% from last month</div>
+                        </div>
+                        <div
+                            style="background: #f8f9fa; border-radius: 10px; padding: 15px; border-left: 4px solid #10b981;">
+                            <div style="font-size: 1.5rem; font-weight: 700; color: #1a1a2e;">612 tons</div>
+                            <div style="color: #666; font-size: 0.85rem;">CO₂ Emissions Reduced</div>
+                            <div style="color: #10b981; font-size: 0.8rem; margin-top: 5px;">↑ 17% improvement</div>
+                        </div>
+                        <div
+                            style="background: #f8f9fa; border-radius: 10px; padding: 15px; border-left: 4px solid #3b82f6;">
+                            <div style="font-size: 1.5rem; font-weight: 700; color: #1a1a2e;">143</div>
+                            <div style="color: #666; font-size: 0.85rem;">Road Accidents Reduced</div>
+                            <div style="color: #ef4444; font-size: 0.8rem; margin-top: 5px;">↓ 29% in monitored
+                                corridors</div>
+                        </div>
+                        <div
+                            style="background: #f8f9fa; border-radius: 10px; padding: 15px; border-left: 4px solid #ef4444;">
+                            <div style="font-size: 1.5rem; font-weight: 700; color: #1a1a2e;">128</div>
+                            <div style="color: #666; font-size: 0.85rem;">Smart Signals Active</div>
+                            <div style="color: #10b981; font-size: 0.8rem; margin-top: 5px;">↑ 9% coverage expansion
+                            </div>
+                        </div>
+                        <div
+                            style="background: #f8f9fa; border-radius: 10px; padding: 15px; border-left: 4px solid #f59e0b;">
+                            <div style="font-size: 1.5rem; font-weight: 700; color: #1a1a2e;">1,032</div>
+                            <div style="color: #666; font-size: 0.85rem;">Emergencies Handled</div>
+                            <div style="color: #10b981; font-size: 0.8rem; margin-top: 5px;">↑ 22% faster response rate
+                            </div>
+                        </div>
+                        <div
+                            style="background: #f8f9fa; border-radius: 10px; padding: 15px; border-left: 4px solid #8b5cf6;">
+                            <div style="font-size: 1.5rem; font-weight: 700; color: #1a1a2e;">88%</div>
+                            <div style="color: #666; font-size: 0.85rem;">Road Network Efficiency</div>
+                            <div style="color: #10b981; font-size: 0.8rem; margin-top: 5px;">↑ 13% improvement</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 25px;">
+                    <div
+                        style="font-size: 1.2rem; font-weight: 700; color: #2e7d9c; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; margin-bottom: 15px;">
+                        🚗 Traffic Distribution</div>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                        <div style="background: #f8f9fa; border-radius: 10px; padding: 15px;">
+                            <div style="font-weight: 600; color: #2e7d9c; margin-bottom: 10px;">Vehicle Composition
+                            </div>
+                            <div
+                                style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #e8e8e8;">
+                                <span>Two-Wheelers</span><strong>42%</strong>
+                            </div>
+                            <div
+                                style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #e8e8e8;">
+                                <span>Cars</span><strong>28%</strong>
+                            </div>
+                            <div
+                                style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #e8e8e8;">
+                                <span>Buses</span><strong>12%</strong>
+                            </div>
+                            <div
+                                style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #e8e8e8;">
+                                <span>Trucks</span><strong>10%</strong>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; padding: 6px 0;">
+                                <span>Autos</span><strong>8%</strong>
+                            </div>
+                        </div>
+                        <div style="background: #f8f9fa; border-radius: 10px; padding: 15px;">
+                            <div style="font-weight: 600; color: #2e7d9c; margin-bottom: 10px;">Weekly Traffic Volume
+                            </div>
+                            <div
+                                style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #e8e8e8;">
+                                <span>Monday</span><strong>85,000</strong>
+                            </div>
+                            <div
+                                style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #e8e8e8;">
+                                <span>Tuesday</span><strong>92,000</strong>
+                            </div>
+                            <div
+                                style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #e8e8e8;">
+                                <span>Wednesday</span><strong>88,000</strong>
+                            </div>
+                            <div
+                                style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #e8e8e8;">
+                                <span>Thursday</span><strong>95,000</strong>
+                            </div>
+                            <div
+                                style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #e8e8e8;">
+                                <span>Friday</span><strong>110,000</strong>
+                            </div>
+                            <div
+                                style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #e8e8e8;">
+                                <span>Saturday</span><strong>78,000</strong>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; padding: 6px 0;">
+                                <span>Sunday</span><strong>65,000</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <div
+                        style="font-size: 1.2rem; font-weight: 700; color: #2e7d9c; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; margin-bottom: 15px;">
+                        🚨 Highly Congested Areas & Recommendations</div>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                        <thead>
+                            <tr style="background: #f8f9fa;">
+                                <th style="padding: 10px; text-align: left; border-bottom: 2px solid #e0e0e0;">Location
+                                </th>
+                                <th style="padding: 10px; text-align: left; border-bottom: 2px solid #e0e0e0;">Status
+                                </th>
+                                <th style="padding: 10px; text-align: left; border-bottom: 2px solid #e0e0e0;">AI Action
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="padding: 8px;">Master Canteen, Bhubaneswar</td>
+                                <td style="padding: 8px;"><span
+                                        style="background: #fee2e2; color: #dc2626; padding: 3px 8px; border-radius: 10px; font-size: 0.75rem;">Critical
+                                        (95%)</span></td>
+                                <td style="padding: 8px; color: #dc2626; font-weight: 600;">⚠️ Flyover Required</td>
+                            </tr>
+                            <tr style="background: #fafafa;">
+                                <td style="padding: 8px;">Badambadi, Cuttack</td>
+                                <td style="padding: 8px;"><span
+                                        style="background: #fee2e2; color: #dc2626; padding: 3px 8px; border-radius: 10px; font-size: 0.75rem;">Critical
+                                        (90%)</span></td>
+                                <td style="padding: 8px; color: #dc2626; font-weight: 600;">🏗️ Terminal Relocation</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px;">Grand Road, Puri</td>
+                                <td style="padding: 8px;"><span
+                                        style="background: #fef3c7; color: #d97706; padding: 3px 8px; border-radius: 10px; font-size: 0.75rem;">High
+                                        (78%)</span></td>
+                                <td style="padding: 8px; color: #d97706;">↔️ Road Widening</td>
+                            </tr>
+                            <tr style="background: #fafafa;">
+                                <td style="padding: 8px;">Panposh Road, Rourkela</td>
+                                <td style="padding: 8px;"><span
+                                        style="background: #fef3c7; color: #d97706; padding: 3px 8px; border-radius: 10px; font-size: 0.75rem;">High
+                                        (72%)</span></td>
+                                <td style="padding: 8px; color: #d97706;">🚛 Heavy Vehicle Corridor</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px;">Ainthapali Chowk, Sambalpur</td>
+                                <td style="padding: 8px;"><span
+                                        style="background: #dbeafe; color: #2563eb; padding: 3px 8px; border-radius: 10px; font-size: 0.75rem;">Medium
+                                        (55%)</span></td>
+                                <td style="padding: 8px; color: #2563eb;">🛠️ Pothole Repair</td>
+                            </tr>
+                            <tr style="background: #fafafa;">
+                                <td style="padding: 8px;">Giri Road, Berhampur</td>
+                                <td style="padding: 8px;"><span
+                                        style="background: #dbeafe; color: #2563eb; padding: 3px 8px; border-radius: 10px; font-size: 0.75rem;">Medium
+                                        (48%)</span></td>
+                                <td style="padding: 8px; color: #2563eb;">🚦 Adaptive Signals</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div
+                    style="text-align: center; padding-top: 15px; border-top: 2px solid #e0e0e0; color: #888; font-size: 0.8rem;">
+                    <p>Generated by PraVah Traffic Management System | Odisha State Government</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // Set current date
+        document.getElementById('reportDate').textContent = 'Generated: ' + new Date().toLocaleDateString('en-IN', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+
+        // PM Office Email
+        const PM_OFFICE_EMAIL = 'pmo@gov.in';
+
+        // API URL (change this if your server is on a different port)
+        const API_URL = 'http://localhost:3000/api/send-email';
+
+        // Show toast notification
+        function showToast(message, type) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast ' + type + ' show';
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 4000);
+        }
+
+        // Generate PDF and return as base64
+        async function generatePDFBase64() {
+            const pdfContent = document.getElementById('pdfContent');
+
+            // Temporarily remove scroll restrictions to capture full content
+            const originalMaxHeight = pdfContent.style.maxHeight;
+            const originalOverflow = pdfContent.style.overflow;
+            pdfContent.style.maxHeight = 'none';
+            pdfContent.style.overflow = 'visible';
+
+            const opt = {
+                margin: [10, 10, 10, 10],
+                filename: 'PraVah_Dashboard_Report.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: {
+                    scale: 2,
+                    useCORS: true,
+                    logging: false,
+                    scrollY: 0
+                },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+            };
+
+            try {
+                const pdfBlob = await html2pdf().from(pdfContent).set(opt).outputPdf('blob');
+
+                // Restore original styles
+                pdfContent.style.maxHeight = originalMaxHeight;
+                pdfContent.style.overflow = originalOverflow;
+
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        const base64 = reader.result.split(',')[1];
+                        resolve(base64);
+                    };
+                    reader.onerror = reject;
+                    reader.readAsDataURL(pdfBlob);
+                });
+            } catch (error) {
+                // Restore original styles even on error
+                pdfContent.style.maxHeight = originalMaxHeight;
+                pdfContent.style.overflow = originalOverflow;
+                console.error('Error generating PDF:', error);
+                return null;
+            }
+        }
+
+        // Send email via backend API
+        async function sendEmail(to, subject) {
+            const pdfBase64 = await generatePDFBase64();
+
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    to: to,
+                    subject: subject || 'PraVah Dashboard Report - ' + new Date().toLocaleDateString('en-IN'),
+                    pdfBase64: pdfBase64
+                })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.message || 'Failed to send email');
+            }
+
+            return result;
+        }
+
+        // Send to PM
+        async function sendToPM() {
+            const btn = document.getElementById('sendToPmBtn');
+            const originalContent = btn.innerHTML;
+
+            btn.innerHTML = '<span class="loading-spinner"></span> Generating PDF & Sending...';
+            btn.disabled = true;
+
+            try {
+                await sendEmail(PM_OFFICE_EMAIL, 'PraVah Dashboard Report - For PM Office Review');
+                showToast('✅ Report sent successfully to PM Office (' + PM_OFFICE_EMAIL + ')', 'success');
+            } catch (error) {
+                console.error('Error:', error);
+                showToast('❌ ' + error.message, 'error');
+            } finally {
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
+            }
+        }
+
+        // Send to manual email
+        async function sendManualEmail() {
+            const emailInput = document.getElementById('emailInput');
+            const email = emailInput.value.trim();
+            const btn = document.getElementById('sendManualBtn');
+            const originalContent = btn.innerHTML;
+
+            // Validate email
+            if (!email) {
+                showToast('⚠️ Please enter an email address', 'error');
+                emailInput.focus();
+                return;
+            }
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                showToast('⚠️ Please enter a valid email address', 'error');
+                emailInput.focus();
+                return;
+            }
+
+            btn.innerHTML = '<span class="loading-spinner"></span> Generating PDF & Sending...';
+            btn.disabled = true;
+
+            try {
+                await sendEmail(email, 'PraVah Dashboard Report');
+                showToast('✅ Report sent successfully to ' + email, 'success');
+                emailInput.value = '';
+            } catch (error) {
+                console.error('Error:', error);
+                showToast('❌ ' + error.message, 'error');
+            } finally {
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
+            }
+        }
+
+        // Enter key handler for email input
+        document.getElementById('emailInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                sendManualEmail();
+            }
+        });
+    </script>
+</body>
+
+</html>
